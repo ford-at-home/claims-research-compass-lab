@@ -15,7 +15,7 @@ describe("authorized canonical source revision", () => {
     expect(manifest.files).toHaveLength(48);
     const root = resolve("specifications/parallel-claims");
     for (const f of manifest.files) expect(createHash("sha256").update(readFileSync(resolve(root, f.path))).digest("hex")).toBe(f.expected_sha256);
-    expect(readdirSync(root, { recursive: true }).filter((p) => typeof p === "string" && existsSync(resolve(root, p)) && manifest.files.some((f) => f.path === p))).length).toBe(48);
+    expect(readdirSync(root, { recursive: true }).filter((p) => typeof p === "string" && existsSync(resolve(root, p)) && manifest.files.some((f) => f.path === p)).length).toBe(48);
     expect(existsSync(resolve(root, "specs/UC02_rental_extensions.md"))).toBe(false);
   });
   it("51 specification acceptance cases are unique and use the authorized revision", () => {

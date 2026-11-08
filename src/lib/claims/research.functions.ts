@@ -187,7 +187,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
         rec.facts = normalizeTaskOutput(res?.output, captured);
         if (rec.case_id === "UC03") {
           const output = competitorTaskOutputSchema.safeParse(res?.output?.content);
-          if (!output.success) throw new ParallelError("schema", "Rental Task output must include benchmark_purpose=competitor_market_benchmark and valid quote records.");
+          if (!output.success) throw new ParallelError("schema", null, "Rental Task output must include benchmark_purpose=competitor_market_benchmark and valid quote records.");
           const quotes = output.data.quotes;
           rec.result["benchmark_purpose"] = output.data.benchmark_purpose;
           const baseline = rec.result["baseline_snapshot"] as RunRecord;
