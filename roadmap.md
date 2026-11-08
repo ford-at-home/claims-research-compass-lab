@@ -15,3 +15,5 @@
 - [x] Verify current revision warning eligibility, retain failed original archive history, run 54 tests and inspect all five fixture flows and mobile layout.
 - [x] Add two complete runtime-only simulated competitor quotes and an unknown candidate beside the supplier baseline.
 - [x] Update rental title/metadata; 55 tests pass, all 48 source hashes unchanged, comparison/evidence and mobile checked.
+- [ ] Add explicit Live demo baseline selection, persisted ownership/source/hash gates and mock MCP behavior.
+- [ ] Separate simulated primary and live external evidence in display/export; test all five gates and verify preview.
