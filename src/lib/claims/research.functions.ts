@@ -1,4 +1,4 @@
-import { CAPABILITIES, selectedItems, parseResponses } from "./capability-upgrade";
+import { CAPABILITIES, selectedItems, parseResponses, publicContextSignature, evidenceScopeSchema } from "./capability-upgrade";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -154,7 +154,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
           rec.result['branch_discovery'] = { method: 'Web Search, not Place Search', provider_result: discovery };
           trace({ op: 'POST /v1/search', transport: 'http', status: 'ok', request: body, response: discovery });
         }
-        await completeResponse(rec, context, dbId, data.parentDbId, `${caseId === 'UC03' ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question) + ' Classify evidence scope as documented, conflicting or unknown only. Not a claims decision. Preserve refusals; publication absence does not establish event absence.'}\nPublic context: ${JSON.stringify(pub.context)}\nDiscovery: ${JSON.stringify(discovery)}`, caseId === 'UC03' ? competitorTaskJsonSchema : undefined);
+        await completeResponse(rec, context, dbId, data.parentDbId, `${caseId === 'UC03' ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question) + ' Classify evidence scope as documented, conflicting or unknown only. Not a claims decision. Preserve refusals; publication absence does not establish event absence.'}\nPublic context: ${JSON.stringify(pub.context)}\nDiscovery: ${JSON.stringify(discovery)}`, caseId === 'UC03' ? competitorTaskJsonSchema : evidenceScopeSchema);
       } catch (e) { failRun(rec, e); }
       await saveRun(context.supabase, context.userId, rec, dbId); return rec;
     }
@@ -331,7 +331,7 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
 async function ownedPreviousResponse(rec: RunRecord, context: any, parentDbId: string): Promise<string> {
   const { data: row } = await context.supabase.from('research_runs').select('result').eq('id', parentDbId).eq('user_id', context.userId).single();
   const parent = row?.result as RunRecord | undefined;
-  if (!parent || parent.status !== 'completed' || parent.case_id !== rec.case_id || parent.input_hash !== rec.input_hash || parent.result['owner_id'] !== context.userId || parent.result['baseline_id'] !== rec.result['baseline_id'] || parent.result['baseline_source'] !== rec.result['baseline_source'] || JSON.stringify(parent.result['outbound_context'] ?? parent.result['outbound_preview']) !== JSON.stringify(rec.result['outbound_context'] ?? rec.result['outbound_preview']) || !parent.provider_ids['response_id']) throw new Error('Follow-up requires your completed response with matching baseline, source and public context.');
+  if (!parent || parent.status !== 'completed' || parent.case_id !== rec.case_id || parent.input_hash !== rec.input_hash || parent.result['owner_id'] !== context.userId || parent.result['baseline_id'] !== rec.result['baseline_id'] || parent.result['baseline_source'] !== rec.result['baseline_source'] || publicContextSignature(parent.result['outbound_context'] ?? parent.result['outbound_preview']) !== publicContextSignature(rec.result['outbound_context'] ?? rec.result['outbound_preview']) || !parent.provider_ids['response_id']) throw new Error('Follow-up requires your completed response with matching baseline, source and public context.');
   return parent.provider_ids['response_id'];
 }
 async function completeResponse(rec: RunRecord, context: any, dbId: string, parentDbId: string | undefined, input: string, schema?: unknown) {

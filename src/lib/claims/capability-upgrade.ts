@@ -46,3 +46,11 @@ export function monitorPreview(question: string, completedTaskId?: string) {
     : { type: 'event_stream', frequency: '1d', processor: 'lite', settings: { query: question, include_backfill: false } } };
 }
 export const lateRecordDiff = { origin: 'SIMULATED', before: { publication: null, completeness: 'unknown' }, after: { publication: 'SIMULATED later correction', completeness: 'unknown' }, changed: ['publication'], decision: 'No loss, coverage or fraud conclusion' };
+export function publicContextSignature(context: Record<string, unknown> = {}) {
+  const { question: _question, ...binding } = context;
+  return JSON.stringify(binding);
+}
+export const evidenceScopeSchema = { type: 'object', required: ['evidence_scope', 'explanation', 'sources'], additionalProperties: false, properties: {
+  evidence_scope: { type: 'string', enum: ['documented', 'conflicting', 'unknown'] }, explanation: { type: ['string', 'null'] },
+  sources: { type: 'array', items: { type: 'object', required: ['url', 'excerpt'], additionalProperties: false, properties: { url: {type: ['string', 'null']}, excerpt: {type: ['string', 'null']} } } },
+} };
