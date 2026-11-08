@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      research_runs: {
+        Row: {
+          captured_at: string | null
+          case_id: string
+          created_at: string
+          error: string | null
+          id: string
+          input: Json
+          input_hash: string
+          mode: string
+          outbound_context: Json | null
+          provider_ids: Json
+          provider_output: Json | null
+          result: Json | null
+          status: string
+          trace: Json
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string | null
+          case_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input: Json
+          input_hash: string
+          mode?: string
+          outbound_context?: Json | null
+          provider_ids?: Json
+          provider_output?: Json | null
+          result?: Json | null
+          status?: string
+          trace?: Json
+          user_id: string
+        }
+        Update: {
+          captured_at?: string | null
+          case_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          input_hash?: string
+          mode?: string
+          outbound_context?: Json | null
+          provider_ids?: Json
+          provider_output?: Json | null
+          result?: Json | null
+          status?: string
+          trace?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
