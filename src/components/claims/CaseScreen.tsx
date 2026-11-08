@@ -18,10 +18,14 @@ import { CASES, MODE_LABEL, type CaseId, type EvidenceFact, type Mode, type RunR
 import { loadFixtureRuns, loadReviews, saveFixtureRun, setReview, type Disposition, type Review } from "@/lib/claims/local-store";
 import { download, runReviews, toReport } from "@/lib/claims/export";
 import { listStoredRuns, resumeLiveRun, runWarRoomLive, startLiveRun, requestRentalException } from "@/lib/claims/research.functions";
-import { rentalExceptionEligibility, rentalScenarioSchema } from "@/lib/claims/rental";
+import { rentalScenarioSchema } from "@/lib/claims/rental";
 import { Chip, Mono, ORIGIN_LABEL, originTone, statusTone } from "./ui-bits";
 import { cn } from "@/lib/utils";
 import { WorkflowIntro } from "./WorkflowIntro";
+
+import { BASELINE_INFO, researchGate, incrementalMetrics, type ResearchIntent } from "@/lib/claims/baseline";
+import { runBaselineFixture, runIncrementalFixture } from "@/lib/claims/baseline-run";
+import { runBenchmarkFixture } from "@/lib/claims/benchmark-fixture";
 
 const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
@@ -44,7 +48,8 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
   const cancelPoll = useRef(false);
   const [exceptionQuestion, setExceptionQuestion] = useState("");
   const [exceptionMessage, setExceptionMessage] = useState<string | null>(null);
-  const exceptionFn = useServerFn(requestRentalException);
+  const [baseline, setBaseline] = useState<RunRecord | null>(null);
+  const [requestedBenchmark, setRequestedBenchmark] = useState(false);
   const isRental = caseId === "UC03";
 
   const startFn = useServerFn(startLiveRun);
@@ -61,7 +66,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
   }, [text]);
 
   useEffect(() => {
-    setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result["workflow"] === "supplier_integration_baseline"));
+    setHistory(loadFixtureRuns(caseId).filter((r) => r.result["scope_version"] === "baseline-first-v2"));
     setReviews(loadReviews());
     return () => {
       cancelPoll.current = true;
@@ -111,9 +116,10 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
     try {
       if (mode === "fixture") {
         setProgress("Loading fabricated storyboard (no provider calls)…");
-        const r = runFixture(caseId, parsed.value, await inputHash(parsed.value));
+        const r = runBaselineFixture(caseId, parsed.value, await inputHash(parsed.value));
+        setBaseline(r);
         saveFixtureRun(r);
-        setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result["workflow"] === "supplier_integration_baseline"));
+        setHistory(loadFixtureRuns(caseId).filter((r) => r.result["scope_version"] === "baseline-first-v2"));
         setRun(r);
       } else if (mode === "live") {
         if (!user) {
@@ -121,8 +127,9 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
           setRun(null);
           return;
         }
-        setProgress(isRental ? "Checking supplier adapter…" : caseId === "UC05" ? "Connecting MCP servers and running tool calls…" : "Search → Extract → Task create…");
-        const r = caseId === "UC05" ? await warFn({ data: { input: parsed.value } }) : await startFn({ data: { caseId, input: parsed.value, precisePoint: precise } });
+        setProgress("Reading existing-system adapter…");
+        const r = await startFn({ data: { caseId, input: parsed.value, precisePoint: precise } });
+        setBaseline(r);
         setRun(r);
         if (r.status === "running" && r.provider_ids["db_run_id"]) {
           setProgress("Task submitted; polling the existing run (never resubmitted)…");
@@ -163,15 +170,15 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
           <div className="font-mono text-xs text-primary">{caseId}</div>
           <h1 className="text-2xl font-semibold">{meta.title}</h1>
         </div>
-        <ModeSelector mode={mode} onChange={(m) => { setMode(m); setRun(null); setProgress(null); }} />
+        <ModeSelector mode={mode} onChange={(m) => { setMode(m); setRun(null); setBaseline(null); setProgress(null); }} />
       </div>
 
       <WorkflowIntro caseId={caseId} />
 
       <div className={cn("rounded-md border px-3 py-2 text-sm", mode === "fixture" ? "border-sim-foreground/30 bg-sim text-sim-foreground" : mode === "live" ? "bg-live text-live-foreground" : "bg-replay text-replay-foreground")}>
-        <strong className="uppercase tracking-wide">{mode}</strong> — {isRental ? mode === "fixture" ? "Simulated supplier integration baseline" : mode === "live" ? "Supplier integration baseline" : "Recorded supplier integration baseline" : MODE_LABEL[mode]}.{" "}
+        <strong className="uppercase tracking-wide">{mode}</strong> — {mode === "fixture" ? "Simulated baseline and optional external evidence" : mode === "live" ? "Existing capability first" : MODE_LABEL[mode]}.{" "}
         {mode === "fixture" && "Every observation is fabricated; no provider calls are made."}
-        {mode === "live" && (isRental ? "Supplier adapter unconfigured — no real contract or connection is supplied. No Parallel calls and no simulated pricing in Live." : "Real Parallel requests with the hypothetical claim context. Failures stay visible; no fixture substitution.")}
+        {mode === "live" && "Existing adapters are unconfigured here. Primary runs never call Parallel. Optional research requires a successful baseline and a precise extra question."}
         {mode === "replay" && "Shows only genuine previously captured live runs with their original capture time."}
       </div>
 
@@ -230,27 +237,38 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
                   Live research requires an authenticated account. <Link to="/auth" className="underline">Sign in</Link>. Mode was not changed.
                 </p>
               )}
-              <Button className="w-full" onClick={execute} disabled={busy || !parsed.ok || (isRental && !rentalScenarioSchema.safeParse(parsed.ok ? parsed.value : null).success) || (mode === "live" && (!user || (!isRental && !outbound?.ok)))}>
-                <Play className="mr-1.5 h-4 w-4" /> {isRental ? "Run supplier baseline" : "Run research"}
+              <Button className="w-full" onClick={execute} disabled={busy || !parsed.ok || (isRental && !rentalScenarioSchema.safeParse(parsed.ok ? parsed.value : null).success) || (mode === "live" && !user)}>
+                <Play className="mr-1.5 h-4 w-4" /> Run existing baseline
               </Button>
               {run && run.input_hash && currentHash && run.input_hash !== currentHash && (
                 <p className="text-xs text-warn-foreground">Input changed since the displayed run (hash {run.input_hash.slice(0, 10)}). The run is retained; start a new run explicitly.</p>
               )}
             </div>
           )}
-          {isRental && <div className="space-y-2 border-t pt-3">
-            <h2 className="text-sm font-semibold">External exception research <Chip>Optional</Chip></h2>
-            <p className="text-xs text-muted-foreground">No validated external gap has been identified. This is not part of ordinary rentals and cannot override supplier prices, coverage or reservations.</p>
-            <Textarea aria-label="External exception question" value={exceptionQuestion} onChange={(e) => { setExceptionQuestion(e.target.value); setExceptionMessage(null); }} placeholder="Unanswered external question" className="min-h-20 text-xs" />
-            <Button variant="outline" size="sm" disabled={!exceptionQuestion.trim() || busy || mode === "replay" || (mode === "live" && !user)} onClick={async () => {
-              const action = "external_exception_research";
+          <div className="space-y-2 border-t pt-3">
+            <h2 className="text-sm font-semibold">{isRental ? "Benchmark competitor rates" : "Incremental outside research"} <Chip>Optional</Chip></h2>
+            <p className="text-xs text-muted-foreground">{BASELINE_INFO[caseId].question}. Candidate experiment, not a verified deficiency. If existing evidence answers the question, stop.</p>
+            <Textarea aria-label="Incremental research question" value={exceptionQuestion} onChange={(e) => { setExceptionQuestion(e.target.value); setExceptionMessage(null); }} placeholder="Specific extra question" className="min-h-20 text-xs" />
+            {!isRental && <label className="flex items-center gap-2 text-xs"><Switch checked={requestedBenchmark} onCheckedChange={setRequestedBenchmark} /> Requested independent benchmark</label>}
+            <Button variant="outline" size="sm" disabled={!exceptionQuestion.trim() || busy || !baseline || baseline.input_hash !== currentHash || mode === "replay" || (mode === "live" && !user)} onClick={async () => {
+              if (!baseline || !parsed.ok) return;
+              const intent: ResearchIntent = { action: isRental ? "benchmark_competitor_rates" : "research_incremental_question", question: exceptionQuestion, reason: isRental || requestedBenchmark ? "requested_benchmark" : "uncovered_question" };
+              const gate = researchGate(caseId, baseline, intent);
+              if (!gate.allowed) { setExceptionMessage(gate.reason); return; }
+              setBusy(true);
               try {
-                const result = mode === "live" ? await exceptionFn({ data: { action, question: exceptionQuestion } }) : rentalExceptionEligibility(action, exceptionQuestion);
-                setExceptionMessage(result.reason);
-              } catch { setExceptionMessage("Exception eligibility check failed. No external research was started."); }
-            }}><Play className="mr-1 h-3.5 w-3.5" /> External exception research</Button>
+                const updatedInput = caseId === "UC05" ? { ...parsed.value, input: { ...parsed.value.input, question: exceptionQuestion } } : parsed.value;
+                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineId: baseline.provider_ids["db_run_id"], intent } }) : await startFn({ data: { caseId, input: parsed.value, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent } });
+                r.result = { ...r.result, scope_version: "baseline-first-v2", research_intent: intent, baseline_snapshot: baseline, incremental_metrics: incrementalMetrics(baseline, r) };
+                setRun(r);
+                if (mode === "fixture") { saveFixtureRun(r); setHistory(loadFixtureRuns(caseId).filter((x) => x.result["scope_version"] === "baseline-first-v2")); }
+                if (r.status === "running" && r.provider_ids["db_run_id"]) await poll(r.provider_ids["db_run_id"], Date.now());
+                await refreshStored();
+              } catch { setExceptionMessage("Outside research failed. Baseline evidence was not replaced; no fixture substitution."); }
+              finally { setBusy(false); }
+            }}><Play className="mr-1 h-3.5 w-3.5" /> {isRental ? "Benchmark competitor rates" : "Research extra question"}</Button>
             {exceptionMessage && <p role="status" className="text-xs text-warn-foreground">{exceptionMessage}</p>}
-          </div>}
+          </div>
         </section>
 
         {/* Results */}
@@ -266,7 +284,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
           )}
           {!shown ? (
             <div className="rounded-lg border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
-              {isRental ? "No supplier evidence yet." : <>Choose a mode and press <strong>Run research</strong>{mode === "replay" ? " — or pick a recording" : ""}.</>}
+              No baseline evidence yet.
             </div>
           ) : (
             <RunView run={shown} reviews={rr} onFact={setFact} onResume={localDeadlineHit || (run?.status === "running" && !busy) ? resume : null} busy={busy} />
@@ -403,6 +421,21 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
         </div>
       </div>
 
+      {run.result["research_intent"] && <section className="border-y py-3 text-sm" aria-label="Incremental evidence">
+        <h2 className="font-semibold">Added evidence against the baseline</h2>
+        <p className="mt-1">Supported additions: {run.result["incremental_metrics"]?.additional_supported_findings ?? 0} · Redundant findings: {run.result["incremental_metrics"]?.redundant_findings ?? 0}</p>
+        <p className="text-xs text-muted-foreground">Non-redundant coverage: {run.result["incremental_metrics"]?.non_redundant_coverage?.length ?? 0} sources · Reviewer effort not measured{run.mode === "fixture" ? " · SIMULATED" : ""}</p>
+      </section>}
+      {run.result["competitor_comparisons"] && <section className="space-y-3 border-y py-3" aria-label="Competitor comparison">
+        <h2 className="text-sm font-semibold">Public retail versus integrated supplier rate</h2>
+        {run.result["competitor_comparisons"].map((q: any, i: number) => <div key={i} className="border-l-2 pl-3 text-xs">
+          <strong>{q.supplier}</strong> · {q.comparable ? "Matched terms" : "Not comparable"}
+          <p>Base rental total: {q.total_usd ?? "unknown"} USD · Delta: {q.delta_vs_supplier_usd ?? "unknown"} USD</p>
+          <p>{q.rate_basis ?? "Unknown rate basis"} · {q.availability_basis ?? "Unknown availability"} · Quote: {q.quoted_at ?? "unknown"}</p>
+          <p className="text-muted-foreground">{q.comparison_basis} · {q.mismatches.join("; ")}</p>
+          <p>Separate switching scenario: {q.separate_switching_scenario.total_including_switching_usd ?? "unknown"} USD (switching cost: {q.separate_switching_scenario.switching_cost_usd ?? "unknown"})</p>
+        </div>)}
+      </section>}
       {run.case_id === "UC05" && <WarRoom run={run} onFact={onFact} />}
 
       <div className="rounded-lg border bg-card">
