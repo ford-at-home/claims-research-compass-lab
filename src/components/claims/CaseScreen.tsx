@@ -169,7 +169,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
       <WorkflowIntro caseId={caseId} />
 
       <div className={cn("rounded-md border px-3 py-2 text-sm", mode === "fixture" ? "border-sim-foreground/30 bg-sim text-sim-foreground" : mode === "live" ? "bg-live text-live-foreground" : "bg-replay text-replay-foreground")}>
-        <strong className="uppercase tracking-wide">{mode}</strong> — {MODE_LABEL[mode]}.{" "}
+        <strong className="uppercase tracking-wide">{mode}</strong> — {isRental ? mode === "fixture" ? "Simulated supplier integration baseline" : mode === "live" ? "Supplier integration baseline" : "Recorded supplier integration baseline" : MODE_LABEL[mode]}.{" "}
         {mode === "fixture" && "Every observation is fabricated; no provider calls are made."}
         {mode === "live" && (isRental ? "Supplier adapter unconfigured — no real contract or connection is supplied. No Parallel calls and no simulated pricing in Live." : "Real Parallel requests with the hypothetical claim context. Failures stay visible; no fixture substitution.")}
         {mode === "replay" && "Shows only genuine previously captured live runs with their original capture time."}

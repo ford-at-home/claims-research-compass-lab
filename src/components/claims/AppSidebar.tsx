@@ -15,7 +15,7 @@ import {
 const items = [
   { to: "/uc01", id: "UC01", title: "Salvage valuation", icon: Car },
   { to: "/uc02", id: "UC02", title: "Damage estimate", icon: Wrench },
-  { to: "/uc03", id: "UC03", title: "Rental extension", icon: CalendarClock },
+  { to: "/uc03", id: "UC03", title: "Rental baseline", icon: CalendarClock },
   { to: "/uc04", id: "UC04", title: "Loss verification", icon: CloudHail },
   { to: "/uc05", id: "UC05", title: "War room (MCP)", icon: Network },
 ] as const;
