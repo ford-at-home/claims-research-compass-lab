@@ -4,6 +4,7 @@ import { containsCanary } from "./redact";
 import { MOCK_ENTERPRISE, PARALLEL_MCP, STORYBOARDS } from "./spec";
 import type { CaseId, EvidenceFact, RunRecord, TraceEntry } from "./types";
 import { MODE_LABEL } from "./types";
+import { mockSupplierAdapter, rentalScenarioSchema, runRentalBaseline } from "./rental";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function fact(p: Partial<EvidenceFact> & Pick<EvidenceFact, "fact_id" | "entity_id" | "attribute" | "origin" | "evidence_type">, now: string): EvidenceFact {
@@ -56,6 +57,11 @@ export function emptyRun(caseId: CaseId, mode: RunRecord["mode"], input: unknown
 
 /** Fixture mode: reads fabricated storyboard observations; makes no provider calls. */
 export function runFixture(caseId: CaseId, wrapper: any, inputHash: string, now = new Date().toISOString()): RunRecord {
+  if (caseId === "UC03") {
+    const parsed = rentalScenarioSchema.safeParse(wrapper);
+    const adapter = parsed.success ? mockSupplierAdapter(parsed.data) : { getPricing: () => ({ status: "incomplete" as const, error: "Invalid scenario" }) };
+    return runRentalBaseline(wrapper, inputHash, "fixture", adapter, now);
+  }
   const run = emptyRun(caseId, "fixture", wrapper, inputHash, now);
   const input = wrapper?.input ?? {};
   const sb = STORYBOARDS[caseId];
@@ -125,37 +131,6 @@ export function runFixture(caseId: CaseId, wrapper: any, inputHash: string, now 
     };
     run.gaps.push("Local labor rate evidence insufficient.", "Unmatched items cannot become price reduction findings.");
     run.summary = `Simulated: comparable total ${totalF?.number_decimal ?? "null"}, delta ${delta ?? "null"}. Excluded: ${cands.filter((c: any) => c !== comparable).map((c: any) => c.id).join(", ")}.`;
-  }
-
-  if (caseId === "UC03") {
-    const w = resolveRentalWindow(new Date(now), input.location?.timezone ?? "UTC", input.pickup_offset_days ?? 0, input.requested_days ?? 0);
-    const days = input.requested_days;
-    const ex = input.existing_extension ?? {};
-    const exDaily = F({ fact_id: "f-existing-daily", entity_id: "existing", attribute: "daily_all_in_rate", origin: "mock_enterprise", evidence_type: "supplier_quote", number_decimal: dec(ex.daily_all_in_usd)?.toFixed(2) ?? null, unit: "USD per day", currency: "USD", qualifiers: [String(ex.availability)], citations: [{ source_ref: "mock://enterprise/UC03/existing", url: null, excerpt: "Simulated existing extension (simulated supplier confirmed)" }] });
-    const exTotal = times(exDaily.number_decimal, days);
-    const exTotalF = F({ fact_id: "calc-existing-total", entity_id: "existing", attribute: "scenario_total", origin: "calculation", evidence_type: "other", status: exTotal ? "simulated" : "insufficient", number_decimal: exTotal, unit: "USD", currency: "USD", formula: `${exDaily.number_decimal} * ${days}`, input_fact_ids: [exDaily.fact_id] });
-    const transferF = F({ fact_id: "f-transfer", entity_id: "alternative", attribute: "transfer_cost", origin: "mock_enterprise", evidence_type: "other", number_decimal: dec(input.transfer_cost_usd)?.toFixed(2) ?? null, unit: "USD", currency: "USD", citations: [{ source_ref: "mock://enterprise/UC03/transfer", url: null, excerpt: "Simulated transfer cost" }] });
-    const alts = sb.observations.map((o: any) => {
-      const id = short(o.source_ref);
-      const daily = F({ fact_id: `f-${id}-daily`, entity_id: id, attribute: "advertised_daily_rate", origin: "simulated_fixture", evidence_type: "posted_rate", number_decimal: dec(o.daily_usd)?.toFixed(2) ?? null, unit: "USD per day", currency: "USD", qualifiers: [o.availability, "public price observation — not a supplier confirmed quote"], citations: simCite(o.source_ref, `${o.daily_usd}/day, availability ${o.availability}`) });
-      const feesF = F({ fact_id: `f-${id}-fees`, entity_id: id, attribute: "mandatory_fees", origin: "simulated_fixture", evidence_type: "posted_rate", number_decimal: o.mandatory_fees_usd ? dec(o.mandatory_fees_usd)!.toFixed(2) : null, status: o.mandatory_fees_usd ? "simulated" : "insufficient", unit: "USD", currency: "USD", citations: simCite(o.source_ref, `mandatory fees ${o.mandatory_fees_usd ?? "not stated"}`) });
-      const total = o.days === days ? sum([times(daily.number_decimal, days), feesF.number_decimal, transferF.number_decimal]) : null;
-      const totalF = F({ fact_id: `calc-${id}-total`, entity_id: id, attribute: "scenario_total_including_transfer", origin: "calculation", evidence_type: "other", status: total ? "simulated" : "insufficient", number_decimal: total, unit: "USD", currency: "USD", formula: `${daily.number_decimal} * ${days} + ${feesF.number_decimal ?? "?"} + ${transferF.number_decimal ?? "?"}`, input_fact_ids: [daily.fact_id, feesF.fact_id, transferF.fact_id] });
-      return { id, o, daily, feesF, totalF };
-    });
-    run.facts = [exDaily, exTotalF, transferF, ...alts.flatMap((a: any) => [a.daily, a.feesF, a.totalF])];
-    const confirmNeeded = alts.some((a: any) => a.o.availability !== "supplier_confirmed");
-    run.result = {
-      resolved_window: w,
-      existing_option: { fact_ids: [exDaily.fact_id, exTotalF.fact_id], origin: "mock_enterprise", total_usd: exTotal },
-      alternative_quotes: alts.map((a: any) => ({ entity_id: a.id, fact_ids: [a.daily.fact_id, a.feesF.fact_id], availability_basis: a.o.availability, supplier_confirmed: a.o.availability === "supplier_confirmed" })),
-      scenario_totals: [{ entity_id: "existing", total_usd: exTotal, fact_id: exTotalF.fact_id }, ...alts.map((a: any) => ({ entity_id: a.id, total_usd: a.totalF.number_decimal, fact_id: a.totalF.fact_id, difference_vs_existing_usd: minus(a.totalF.number_decimal, [exTotal]) }))],
-      suitability: [{ vehicle_class: input.vehicle_class, seats_needed: input.seats_needed, status: "unknown", notes: "Class and seating not confirmed by supplier" }],
-      next_action: confirmNeeded ? "confirm_supplier" : "review_existing",
-      supplier_confirmation_required: confirmNeeded,
-    };
-    run.gaps.push("Alternative availability is advertised only; supplier confirmation needed. No booking or reservation action is offered.");
-    run.summary = `Simulated: existing ${exTotal}, alternative incl. transfer ${alts[0]?.totalF.number_decimal ?? "null"}; supplier confirmation required.`;
   }
 
   if (caseId === "UC04") {
