@@ -2,7 +2,7 @@
 
 # North star
 
-Claims handlers decide claims on verified, cited outside evidence.
+Augment claims handling with outside evidence.
 
 ## Metric
 
