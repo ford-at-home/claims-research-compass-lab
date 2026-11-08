@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiMockEnterpriseMcpRouteImport } from './routes/api/mock-enterprise-mcp'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMockEnterpriseMcpRoute = ApiMockEnterpriseMcpRouteImport.update({
+  id: '/api/mock-enterprise-mcp',
+  path: '/api/mock-enterprise-mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/mock-enterprise-mcp'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/mock-enterprise-mcp'
+  id: '__root__' | '/' | '/api/mock-enterprise-mcp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiMockEnterpriseMcpRoute: typeof ApiMockEnterpriseMcpRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mock-enterprise-mcp': {
+      id: '/api/mock-enterprise-mcp'
+      path: '/api/mock-enterprise-mcp'
+      fullPath: '/api/mock-enterprise-mcp'
+      preLoaderRoute: typeof ApiMockEnterpriseMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiMockEnterpriseMcpRoute: ApiMockEnterpriseMcpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
