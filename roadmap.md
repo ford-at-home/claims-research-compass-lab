@@ -17,4 +17,6 @@
 - [x] Update rental title/metadata; 55 tests pass, all 48 source hashes unchanged, comparison/evidence and mobile checked.
 - [x] Add explicit Live demo baseline selection, persisted ownership/source/hash gates and mock MCP behavior.
 - [x] Separate simulated primary and live external evidence in display/export; 105 tests pass, all five source controls/mobile checked, automatic build OK.
-- [ ] Authenticated real-user end-to-end verification: no app auth account exists; no paid provider calls or new credentials requested.
+- [ ] Focused capability upgrade: selected-only per-item Tasks, interactive Responses, compatible discovery/scope checks, Monitor previews and MCP parsing.
+- [ ] Verify suite, five fixture flows, narrow layout, automatic build and authorized minimal public smoke; document access limitations.
+- [ ] Authenticated real-user end-to-end verification: no app auth account exists; do not create an account or weaken authentication.
