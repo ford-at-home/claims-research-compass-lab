@@ -1,6 +1,6 @@
 # Current executable scope — baseline first
 
-This November 8, 2026 user steering supersedes earlier routine-research framing across all five workflows. The revised canonical text package is pending; do not silently rewrite imported artifacts or remove the original import-integrity warning.
+This November 8, 2026 user steering supersedes earlier routine-research framing across all five workflows. User-authorized canonical revision `2026-11-08-existing-systems-first` is being imported in two batches: batch 1 has 30/30 passing file hashes; batch 2 and the complete 48-file manifest are pending. The revised contract contains 51 specification acceptance cases, distinct from executed tests. Keep the original failed import manifest as historical evidence and retain current UI warnings until the full revised source passes verification.
 
 All primary runs call existing-system adapters with zero Parallel calls. If the baseline answers the question, stop. An outage or incomplete response is an integration error, never permission for a public-data substitute. External research is a separate explicit action for a precise unanswered question or a requested independent benchmark. These experiments are hypotheses, not verified insurer deficiencies or measured benefits. Only the existing rental integration/pricing capability is confirmed; no insurer vendor names, interfaces or coverage are invented.
 
