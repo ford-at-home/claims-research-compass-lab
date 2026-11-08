@@ -1,3 +1,4 @@
+import { CAPABILITIES, selectedItems, parseResponses } from "./capability-upgrade";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -64,7 +65,7 @@ function failRun(rec: RunRecord, e: unknown) {
   rec.error = R(pe ? `[${pe.kind}${pe.httpStatus ? " " + pe.httpStatus : ""}] ${pe.message}` : (e as Error).message);
 }
 
-const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional() });
+const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional(), selectedItemIds: z.array(z.string()).max(2).optional(), parentDbId: z.string().uuid().optional() });
 function baselineMatches(baseline: RunRecord | undefined, caseId: CaseId, hash: string, source: string, owner: string) {
   return !!baseline && baseline.mode === "live" && baseline.case_id === caseId && baseline.input_hash === hash && baseline.result["scope_version"] === "baseline-first-v2" && !baseline.result["research_intent"] && baseline.result["baseline_source"] === source && baseline.result["owner_id"] === owner;
 }
@@ -118,6 +119,43 @@ export const startLiveRun = createServerFn({ method: "POST" })
     trace({ op: "local.public_context_filter", transport: "none", status: "ok", request: { dropped: pub.dropped }, response: pub.context });
     const dbId = await saveRun(context.supabase, context.userId, rec);
     rec.provider_ids["db_run_id"] = dbId;
+    // Explicit compatible execution: this saved gateway has no Groups/Places/Decisions/MCP endpoints.
+    rec.result["capability"] = CAPABILITIES[caseId];
+    if ((caseId === 'UC01' || caseId === 'UC02') && data.selectedItemIds) {
+      try {
+        const items = selectedItems(caseId, data.selectedItemIds);
+        rec.result["selected_items"] = items.map(item => ({ ...item, status: 'pending', run_id: null, output: null }));
+        rec.result["task_group_support"] = 'Unavailable; explicit host batch of individual Tasks, not a Parallel Task Group';
+        rec.steps = items.map(item => ({ name: item.id, status: 'pending' }));
+        await saveRun(context.supabase, context.userId, rec, dbId);
+        for (const child of rec.result["selected_items"]) {
+          child.status = 'submission_unknown'; // Persist BEFORE POST; never retry ambiguous submissions.
+          await saveRun(context.supabase, context.userId, rec, dbId);
+          rec.calls.task++;
+          const body = { processor: 'base', input: `${incrementalPrompt(caseId, child.question)}\nReviewer question: ${data.intent.question}\nPublic context: ${JSON.stringify(pub.context)}`, task_spec: TASK_TEMPLATES[caseId].task_spec };
+          const response: any = await parallelRequest('POST', '/v1/tasks/runs', body, { idempotent: false });
+          if (!response.run_id) throw new ParallelError('submission_unknown', null, 'Task returned no ID; action required, no resubmission.');
+          child.run_id = response.run_id; child.status = 'running';
+          trace({ op: 'POST /v1/tasks/runs', transport: 'http', status: 'ok', request: { item_id: child.id, ...body }, response: { run_id: response.run_id } });
+          await saveRun(context.supabase, context.userId, rec, dbId);
+        }
+      } catch (e) { failRun(rec, e); }
+      await saveRun(context.supabase, context.userId, rec, dbId); return rec;
+    }
+    if (caseId === 'UC03' || caseId === 'UC04') {
+      try {
+        let discovery: any = null;
+        if (caseId === 'UC03') {
+          const body = { objective: `Find OTHER passenger-car rental branches, excluding equipment rental, aggregators and these brands: ${JSON.stringify(pub.context.excluded_supplier_groups)} ${pub.context.excluded_supplier}. Label duplicate locales and branch identities. Branch pages are not quotes.`, search_queries: [`passenger car rental ${pub.context.branch_area}`], mode: 'fast', advanced_settings: { max_results: 5 } };
+          rec.calls.search++;
+          discovery = await parallelRequest('POST', '/v1/search', body, { idempotent: false });
+          rec.result['branch_discovery'] = { method: 'Web Search, not Place Search', provider_result: discovery };
+          trace({ op: 'POST /v1/search', transport: 'http', status: 'ok', request: body, response: discovery });
+        }
+        await completeResponse(rec, context, dbId, data.parentDbId, `${caseId === 'UC03' ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question) + ' Classify evidence scope as documented, conflicting or unknown only. Not a claims decision. Preserve refusals; publication absence does not establish event absence.'}\nPublic context: ${JSON.stringify(pub.context)}\nDiscovery: ${JSON.stringify(discovery)}`, caseId === 'UC03' ? competitorTaskJsonSchema : undefined);
+      } catch (e) { failRun(rec, e); }
+      await saveRun(context.supabase, context.userId, rec, dbId); return rec;
+    }
     const retries = { count: 0 };
     const excerpts: any[] = [];
     try {
@@ -186,6 +224,28 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
     const rec = row.result as unknown as RunRecord;
     if (rec.result?.["owner_id"] && rec.result["owner_id"] !== context.userId) throw new Error("Run not found");
     if (!rec.result?.["research_intent"]) return rec; // Primary/legacy runs never poll Parallel.
+    if (Array.isArray(rec.result['selected_items']) && rec.status === 'running') {
+      for (const child of rec.result['selected_items']) {
+        if (!child.run_id || child.status !== 'running') continue;
+        try {
+          const result: any = await parallelRequest('GET', `/v1/tasks/runs/${encodeURIComponent(child.run_id)}/result?timeout=1`, null, { idempotent: false });
+          child.output = result.output; child.status = 'completed';
+          const facts = normalizeTaskOutput(result.output, nowIso()).map(f => ({ ...f, fact_id: `${child.id}-${f.fact_id}`, entity_id: child.id }));
+          rec.facts.push(...facts);
+          rec.trace.push(R({ at: nowIso(), op: 'selected-item result', transport: 'http', status: 'ok', response: { item_id: child.id, run_id: child.run_id, basis: result.output?.basis ?? [] } }));
+        } catch (e) {
+          if (e instanceof ParallelError && e.httpStatus === 408) continue;
+          child.status = e instanceof ParallelError && e.httpStatus && e.httpStatus >= 400 && e.httpStatus < 500 ? 'action_required' : 'running';
+          child.error = R((e as Error).message);
+        }
+      }
+      const children = rec.result['selected_items'];
+      rec.steps = children.map((c: any) => ({ name: c.id, status: c.status === 'completed' ? 'done' : c.status === 'running' ? 'pending' : 'error' }));
+      if (children.every((c: any) => c.status === 'completed')) { rec.status = 'completed'; rec.captured_at = nowIso(); }
+      else if (!children.some((c: any) => c.status === 'running')) { rec.status = 'error'; rec.error = 'Partial results retained; unresolved children require review.'; }
+      rec.result['incremental_metrics'] = incrementalMetrics(rec.result['baseline_snapshot'], rec);
+      await saveRun(context.supabase, context.userId, rec, data.dbId); return rec;
+    }
     const runId = rec.provider_ids["task_run_id"];
     if (!runId || rec.status !== "running") return rec;
     try {
@@ -251,7 +311,7 @@ export const requestRentalException = createServerFn({ method: "POST" })
 /** UC05 live: two actual MCP connections. Never fabricates a live trace. */
 export const runWarRoomLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), baselineId: z.string().optional(), intent: researchIntentSchema.optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), baselineId: z.string().optional(), parentDbId: z.string().uuid().optional(), intent: researchIntentSchema.optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const now = nowIso();
     const rec = emptyRun("UC05", "live", data.input, await inputHash(data.input), now);
@@ -286,10 +346,10 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
       internal = { context: mcp.context, rules: mcp.rules };
       tr({ op: "mock-enterprise.tools/call get_case_context, get_demo_rules", transport: "mcp-http", status: "ok", response: { retained_in_host: true, internal_context: "[kept local — not shown in outbound trace]" } });
       conn["mock-enterprise"] = "connected (HTTP MCP adaptation of stdio design)";
-      rec.steps[0]!.status = "done";
+      if (rec.steps[0]) rec.steps[0].status = "done";
     } catch (e) {
       tr({ op: "mock-enterprise MCP", transport: "mcp-http", status: "error", note: (e as Error).message });
-      rec.steps[0]!.status = "error";
+      if (rec.steps[0]) rec.steps[0].status = "error";
       rec.status = "error"; rec.error = "Enterprise MCP integration failed; no public research substitute.";
       return rec;
     }
@@ -302,77 +362,51 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
     outbound.question = data.intent.question;
     result.outbound_preview = outbound;
     result.private_canary_outbound = containsCanary(outbound);
-    rec.steps[1]!.status = "done";
+    if (rec.steps[1]) rec.steps[1].status = "done";
     tr({ op: "local.public_context_filter", transport: "none", status: "ok", request: { dropped: pub.dropped }, response: outbound });
-    // 3. Parallel MCP
-    const sources: any[] = [];
-    let narrative: string | null = null;
-    try {
-      const key = getKey();
-      const px = new McpHttpClient(PARALLEL_MCP.url, { authorization: `Bearer ${key}` });
-      const init = await px.initialize();
-      const list = await px.listTools();
-      const tools: any[] = list?.tools ?? [];
-      const names = tools.map((t) => t.name);
-      tr({ op: "parallel initialize + tools/list", transport: "mcp-http", status: "ok", response: { server: init?.serverInfo, tools: names } });
-      conn["parallel"] = "connected";
-      rec.steps[2]!.status = "done";
-      const v = outbound.public_vehicle ?? {};
-      const text = `${outbound.question} Vehicle: ${v.year} ${v.make} ${v.model}. Region: ${outbound.region}.`;
-      const queries = searchQueries("UC05", outbound);
-      const call = async (name: string, idx: number, args: Record<string, unknown>) => {
-        const t = tools.find((x) => x.name === name);
-        if (!t) { rec.steps[idx]!.status = "skipped"; tr({ op: `parallel.${name}`, transport: "mcp-http", status: "skipped", note: "Tool not discovered" }); return null; }
-        if (containsCanary(args)) throw new Error("Canary detected in outbound MCP arguments; aborted");
-        callCap();
-        try {
-          const r = await px.callTool(name, args);
-          const txt = toolText(r);
-          tr({ op: `parallel.${name}`, transport: "mcp-http", status: r?.isError ? "error" : "ok", request: args, response: { text_preview: txt.slice(0, 1200) } });
-          rec.steps[idx]!.status = r?.isError ? "error" : "done";
-          return txt;
-        } catch (e) {
-          tr({ op: `parallel.${name}`, transport: "mcp-http", status: "error", request: args, note: (e as Error).message });
-          rec.steps[idx]!.status = "error";
-          return null;
-        }
-      };
-      const urlRe = /https?:\/\/[^\s"'<>)\]]+/g;
-      const sTxt = await call("web_search", 3, buildToolArgs(tools.find((t) => t.name === "web_search")?.inputSchema, { text, queries, urls: [] }));
-      const urls = Array.from(new Set((sTxt ?? "").match(urlRe) ?? [])).slice(0, 3);
-      for (const u of urls) {
-        const i = (sTxt ?? "").indexOf(u);
-        sources.push({ url: u, excerpt: (sTxt ?? "").slice(Math.max(0, i - 200), i + 400), via: "web_search" });
-      }
-      if (urls.length) {
-        const fTxt = await call("web_fetch", 4, buildToolArgs(tools.find((t) => t.name === "web_fetch")?.inputSchema, { text, queries, urls }));
-        if (fTxt) sources.push({ url: urls[0], excerpt: fTxt.slice(0, 1500), via: "web_fetch" });
-      } else rec.steps[4]!.status = "skipped";
-      narrative = await call("web_research", 5, buildToolArgs(tools.find((t) => t.name === "web_research")?.inputSchema, { text, queries, urls }));
-      for (const u of Array.from(new Set((narrative ?? "").match(urlRe) ?? [])).slice(0, 8)) if (!sources.some((s) => s.url === u)) sources.push({ url: u, excerpt: "Cited in web_research narrative (open source to verify).", via: "web_research" });
-    } catch (e) {
-      const msg = e instanceof ParallelError ? e.message : (e as Error).message;
-      tr({ op: "parallel MCP", transport: "mcp-http", status: "error", note: msg });
-      if (rec.steps[2]!.status !== "done") rec.steps[2]!.status = "error";
-      rec.error = R(msg);
-    }
-    // Canary audit across every serialized outbound trace request
-    result.private_canary_outbound = rec.trace.some((t) => t.transport === "mcp-http" && t.op.startsWith("parallel") && containsCanary(t.request));
-    rec.facts = sources.map((s, i) => fact({ fact_id: `src-${i}`, entity_id: "public_question", attribute: "public_source", origin: "live_web", evidence_type: "other", value_text: s.url, status: "candidate", citations: [{ source_ref: s.url, url: s.url, excerpt: s.excerpt }], qualifiers: [`via ${s.via}`] }, nowIso()));
-    if (internal) rec.facts.push(fact({ fact_id: "m-internal-delay", entity_id: "internal", attribute: "reported_delay_days", origin: "mock_enterprise", status: "simulated", evidence_type: "other", qualifiers: ["SIMULATED enterprise record; actual MCP protocol"], number_decimal: String(result.internal_context?.reported_delay_days ?? "") || null, unit: "days", citations: [{ source_ref: "mcp://mock-enterprise/get_case_context", url: null, excerpt: "SIMULATED mock enterprise context (kept local)" }] }, nowIso()));
-    result.brief = {
-      cited_narrative: narrative,
-      supported_facts: sources.filter((s) => s.via !== "web_research").map((s, i) => ({ text: `Public source: ${s.url}`, fact_ids: [`src-${i}`] })),
-      hypotheses: [{ text: "Any link between public notices and the internal repair delay is a hypothesis, not established.", fact_ids: [] }],
-      contradictions: [],
-      open_questions: ["Which statements in the narrative are supported by the opened source excerpts?", "Does the shop directly confirm a parts or procedure constraint?"],
-      next_actions: ["Review each source excerpt", "Request direct shop confirmation"],
-    };
-    rec.steps[6]!.status = "done";
-    rec.status = conn["parallel"] === "connected" && narrative && rec.steps.slice(0, 6).every((s) => s.status === "done") ? "completed" : "error";
-    rec.result["incremental_metrics"] = incrementalMetrics(baseline, rec);
-    rec.captured_at = rec.status === "completed" ? nowIso() : null;
+    // This connection key is gateway-only, not a provider bearer token.
+    // Keep enterprise MCP real; use the explicitly advertised Responses adaptation.
+    result.capability = CAPABILITIES.UC05;
+    result.mcp_connections.parallel = 'Unavailable on saved gateway; explicit Responses HTTP adaptation (not MCP)';
+    result.outbound_context = outbound;
+    rec.steps = [{ name: 'Enterprise HTTP MCP', status: 'done' }, { name: 'Public context filter', status: 'done' }, { name: 'Parallel Responses (HTTP, not MCP)', status: 'pending' }];
     const dbId = await saveRun(context.supabase, context.userId, rec);
-    rec.provider_ids["db_run_id"] = dbId;
+    rec.provider_ids['db_run_id'] = dbId;
+    try { await completeResponse(rec, context, dbId, data.parentDbId, `${data.intent.question}\nPublic context: ${JSON.stringify(outbound)}\nUse current official MCP transport/initialization/tool discovery documentation. Public facts do not establish internal root cause.`); }
+    catch (e) { failRun(rec, e); }
+    await saveRun(context.supabase, context.userId, rec, dbId);
     return rec;
   });
+
+async function completeResponse(rec: RunRecord, context: any, dbId: string, parentDbId: string | undefined, input: string, schema?: unknown) {
+  let previous: string | undefined;
+  if (parentDbId) {
+    const { data: row } = await context.supabase.from('research_runs').select('result').eq('id', parentDbId).eq('user_id', context.userId).single();
+    const parent = row?.result as RunRecord | undefined;
+    if (!parent || parent.status !== 'completed' || parent.case_id !== rec.case_id || parent.input_hash !== rec.input_hash || parent.result['owner_id'] !== context.userId || parent.result['baseline_id'] !== rec.result['baseline_id'] || parent.result['baseline_source'] !== rec.result['baseline_source'] || JSON.stringify(parent.result['outbound_context'] ?? parent.result['outbound_preview']) !== JSON.stringify(rec.result['outbound_context'] ?? rec.result['outbound_preview']) || !parent.provider_ids['response_id']) throw new Error('Follow-up requires your completed response with matching baseline, source and public context.');
+    previous = parent.provider_ids['response_id'];
+  }
+  const body = { model: 'parallel', input, reasoning: { effort: 'low' }, ...(previous ? { previous_response_id: previous } : {}), ...(schema ? { text: { format: { type: 'json_schema', name: 'case_result', schema } } } : {}) };
+  if (containsCanary(body)) throw new Error('Private context rejected.');
+  rec.result['responses_calls'] = 1;
+  const raw = await parallelRequest('POST', '/v1/responses', body, { idempotent: false, timeoutMs: 120_000 });
+  const parsed = parseResponses(raw);
+  rec.result['responses'] = parsed;
+  rec.result['usage'] = (raw as any)?.usage ?? null;
+  if (!parsed.id || !parsed.text || parsed.refusal.length) throw new Error('Responses returned missing ID/text or refusal; retained for review, no fallback.');
+  rec.provider_ids['response_id'] = parsed.id;
+  rec.trace.push(R({ at: nowIso(), op: 'POST /v1/responses', transport: 'http', status: 'ok', request: body, response: parsed }));
+  rec.summary = parsed.text;
+  rec.facts = parsed.annotations.filter((a: any) => a.url).map((a: any, i: number) => fact({ fact_id: `response-source-${i}`, entity_id: 'public_question', attribute: 'source_annotation', origin: 'live_web', status: 'candidate', value_text: a.title ?? a.url, citations: [{ source_ref: a.url, url: a.url, excerpt: '' }], qualifiers: ['URL annotation only; no exact source excerpt proof. Numeric claims require independent evidence.'] }, nowIso()));
+  if (rec.case_id === 'UC03') {
+    const quotes = competitorTaskOutputSchema.safeParse(parsed.structured);
+    if (!quotes.success) throw new ParallelError('schema', null, 'Responses quote schema invalid; no inferred rates.');
+    rec.result['competitor_comparisons'] = compareCompetitorQuotes(rec.result['baseline_snapshot'], quotes.data.quotes, nowIso());
+    rec.result['benchmark_purpose'] = quotes.data.benchmark_purpose;
+    rec.summary = 'Public competitor research complete. Missing dates, rates, fees or inventory remain unknown and unranked.';
+  }
+  rec.status = 'completed'; rec.captured_at = nowIso();
+  rec.steps = [{ name: 'Existing baseline gate', status: 'done' }, { name: 'Interactive Responses', status: 'done' }, { name: 'Evidence review', status: 'done' }];
+  rec.result['incremental_metrics'] = incrementalMetrics(rec.result['baseline_snapshot'], rec);
+  await saveRun(context.supabase, context.userId, rec, dbId);
+}
