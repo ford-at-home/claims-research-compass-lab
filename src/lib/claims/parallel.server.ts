@@ -36,7 +36,7 @@ export async function parallelRequest<T = unknown>(
   method: "GET" | "POST",
   path: string,
   body: unknown,
-  opts: { idempotent: boolean; retries?: { count: number } },
+  opts: { idempotent: boolean; retries?: { count: number }; timeoutMs?: number },
 ): Promise<T> {
   const key = getKey();
   const lovableKey = process.env["LOVABLE_API_KEY"];
@@ -51,7 +51,7 @@ export async function parallelRequest<T = unknown>(
         method,
         headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": key, "content-type": "application/json" },
         body: method === "POST" ? JSON.stringify(body) : null,
-        signal: AbortSignal.timeout(LIMITS.httpTimeoutMs),
+        signal: AbortSignal.timeout(opts.timeoutMs ?? (path === '/v1/responses' ? 120_000 : LIMITS.httpTimeoutMs)),
       });
     } catch (e) {
       if (!opts.idempotent) throw new ParallelError("submission_unknown", null, "Response lost after submission (network/timeout). Recorded as submission_unknown; not resubmitted automatically.");
