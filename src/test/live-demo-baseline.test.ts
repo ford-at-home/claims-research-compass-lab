@@ -31,7 +31,7 @@ async function baseline(id: CaseId) {
 beforeEach(() => {
   wire.length = 0;
   vi.mocked(getKey).mockReset().mockReturnValue("test-key");
-  vi.mocked(parallelRequest).mockReset().mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : { run_id: "test-task" });
+  vi.mocked(parallelRequest).mockReset().mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : path === "/v1/responses" ? { id: "actual-mocked-response", output: [{type:"message",content:[{type:"output_text",text: JSON.stringify({benchmark_purpose:"competitor_market_benchmark",quotes:[]}),annotations:[]}]}] } : { run_id: "test-task" });
   vi.stubGlobal("fetch", vi.fn(async (url: string, options: RequestInit) => {
     const body = JSON.parse(String(options.body));
     wire.push({ url: String(url), body, authorization: new Headers(options.headers).get("authorization") });
@@ -64,10 +64,11 @@ describe("explicit Live demo baselines", () => {
       expect(db.selection.eq).toHaveBeenCalledWith("user_id", "owner");
       if (id === "UC05") {
         expect(output.status).toBe("completed");
-        expect(wire.some((w) => w.url.includes("parallel.ai") && w.body.params?.name === "web_research")).toBe(true);
+        expect(parallelRequest).toHaveBeenCalledWith("POST", "/v1/responses", expect.anything(), expect.anything());
+        expect(wire.some(w => w.url.includes("parallel.ai"))).toBe(false);
         expect(JSON.stringify(wire.filter((w) => w.url.includes("parallel.ai")))).not.toContain("MOCK_INTERNAL_ONLY_9F");
         expect(wire.filter((w) => w.url.includes("mock-enterprise-mcp")).map((w) => w.body.method)).toContain("tools/list");
-      } else expect(parallelRequest).toHaveBeenCalledWith("POST", "/v1/tasks/runs", expect.anything(), expect.anything());
+      } else expect(parallelRequest).toHaveBeenCalledWith("POST", id === "UC03" || id === "UC04" ? "/v1/responses" : "/v1/tasks/runs", expect.anything(), expect.anything());
     });
     for (const block of ["answered", "missing-key", "cross-owner", "wrong-source", "unauthorized", "missing-baseline", "connected-error"] as const) it(`${id}: ${block} makes no external calls`, async () => {
       const { rec } = await baseline(id);
