@@ -30,10 +30,11 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
-- `specifications/parallel-claims/` is the imported source package; never edit it. Stack adaptations are recorded in `specifications/STACK_ADAPTATION.md`.
+- Preserve the imported source package except user-authorized UC03 scope amendments; retain the original integrity manifest and record amendments separately in `specifications/STACK_ADAPTATION.md`.
 - Parallel API calls and the API key stay in server-only modules (`*.server.ts`, server function handlers); the key is never returned, logged or exported.
 - Live research server functions require `requireSupabaseAuth`; runs are stored in `research_runs` owned by the user (RLS), so visitors cannot spend credits.
 - Fixture, Live and Replay are separate code paths; Replay only renders stored completed live runs, never fixture data.
 - Task runs are created once and resumed by stored `task_run_id`; no automatic resubmission.
 - Money and distances use `decimal.js` helpers in `src/lib/claims/calc.ts`; unknown components return null.
 - Shared workflow introductions live in a presentation-only component keyed by CaseId; proposed process diagrams never imply a live connection or completed research.
+- UC03 dispatches exclusively to the supplier adapter before any Parallel configuration or research step; its standalone contract/evaluator keeps supplier failures fail-closed and exception eligibility separate.
