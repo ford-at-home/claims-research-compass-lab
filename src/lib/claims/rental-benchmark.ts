@@ -26,8 +26,9 @@ export function competitorBenchmarkContext(input: unknown, baseline: RunRecord, 
     question, branch_area: `${s.input.location.zip} ${s.input.location.state}`,
     pickup_at: baseline.result["resolved_window"]?.pickup_at, return_at: baseline.result["resolved_window"]?.return_at,
     days: s.input.requested_days, vehicle_class: s.input.vehicle_class, seats: s.input.seats_needed, currency: "USD",
-    excluded_supplier: s.input.supplier_fixture.supplier_identity ?? null,
-    excluded_supplier_groups: s.input.supplier_fixture.excluded_supplier_groups ?? [],
+    excluded_supplier: s.input.public_supplier_exclusion?.name ?? s.input.supplier_fixture.supplier_identity ?? null,
+    excluded_supplier_groups: s.input.public_supplier_exclusion?.same_group_names ?? s.input.supplier_fixture.excluded_supplier_groups ?? [],
+    baseline_identity_basis: baseline.result["baseline_source"] === "demo" ? "SIMULATED target, not an actual insurer vendor. Optional exclusion name is public-only." : "Connected supplier identity",
     purpose: "Public RETAIL quotes from different suppliers only. Do not obtain or verify integrated supplier pricing, contact suppliers or change reservations.",
     // Contracted prices, insurer rules and private context are intentionally absent.
   };
@@ -40,6 +41,8 @@ export function compareCompetitorQuotes(baseline: RunRecord, quotes: CompetitorQ
   return quotes.map((q) => {
     const mismatches: string[] = [];
     if (!q.supplier_identity_verified || !input.supplier_fixture.supplier_identity || q.supplier.toLowerCase() === input.supplier_fixture.supplier_identity.toLowerCase()) mismatches.push("Different supplier identity is not established");
+    if (input.public_supplier_exclusion?.name.toLowerCase() === q.supplier.toLowerCase()) mismatches.push("Specified public supplier exclusion");
+    if ((input.public_supplier_exclusion?.same_group_names ?? []).some((name) => name.toLowerCase() === q.supplier.toLowerCase())) mismatches.push("Specified public same-group supplier exclusion");
     if ((input.supplier_fixture.excluded_supplier_groups ?? []).some((name) => name.toLowerCase() === q.supplier.toLowerCase())) mismatches.push("Known same-group supplier is excluded");
     for (const [key, value] of Object.entries(expected)) {
       if (q[key as keyof CompetitorQuote] !== value || !q.supported_terms.includes(key)) mismatches.push(`${key} mismatch or unsupported`);
