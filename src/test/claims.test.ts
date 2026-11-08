@@ -38,11 +38,11 @@ describe("UC02 damage fixture", () => {
 
 describe("UC03 rental fixture", () => {
   const r = runFixture("UC03", FIXTURE_INPUTS.UC03, "h", "2026-11-08T04:43:00Z");
-  it("existing 150.00, alternative 188.00 incl. transfer, confirmation required", () => {
-    expect(num(r, "calc-existing-total")).toBe("150.00");
-    expect(num(r, "calc-alternative-A-total")).toBe("188.00");
-    expect(r.result["supplier_confirmation_required"]).toBe(true);
-    expect(r.result["next_action"]).toBe("confirm_supplier");
+  it("supplier scenario totals 150.00 with no public comparison", () => {
+    expect(num(r, "calc-supplier-total")).toBe("150.00");
+    expect(r.result["alternative_quotes"]).toBeUndefined();
+    expect(r.result["availability"]).toBeNull();
+    expect(r.result["extension_confirmed"]).toBeNull();
   });
   it("resolves explicit dates in timezone (run date Nov 7 local, +1 day)", () => {
     const w = r.result["resolved_window"] as { pickup_at: string; return_at: string };
