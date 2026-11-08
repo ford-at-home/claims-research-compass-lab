@@ -13,8 +13,8 @@ export const ITEMS = {
     { id: 'sale-access', question: 'What official IAA documentation distinguishes current bids from completed sale records and restricts access to sold records? Unavailable realized prices stay unknown.' },
   ],
   UC02: [
-    { id: 'bumper-guidance', question: 'Find public Toyota bumper repair and ADAS guidance, retaining publication date and applicability. General guidance is not VIN fitment, labor hours or approval.' },
-    { id: 'calibration-applicability', question: 'Find public Toyota ADAS calibration applicability after bumper work. Preserve model/year qualifiers and unknown applicability; do not determine VIN fitment or approve an estimate.' },
+    { id: 'bumper-guidance', line_id: 'EX-BUMPER', question: 'Find public Toyota bumper repair and ADAS guidance, retaining publication date and applicability. General guidance is not VIN fitment, labor hours or approval.' },
+    { id: 'calibration-applicability', line_id: 'EX-ADAS', question: 'Find public Toyota ADAS calibration applicability after bumper work. Preserve model/year qualifiers and unknown applicability; do not determine VIN fitment or approve an estimate.' },
   ],
 };
 export const EXAMPLES: Record<CaseId, string> = {

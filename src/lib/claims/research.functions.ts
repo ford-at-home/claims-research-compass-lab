@@ -121,9 +121,10 @@ export const startLiveRun = createServerFn({ method: "POST" })
     rec.provider_ids["db_run_id"] = dbId;
     // Explicit compatible execution: this saved gateway has no Groups/Places/Decisions/MCP endpoints.
     rec.result["capability"] = CAPABILITIES[caseId];
-    if ((caseId === 'UC01' || caseId === 'UC02') && data.selectedItemIds) {
+    if (caseId === 'UC01' || caseId === 'UC02') {
       try {
-        const items = selectedItems(caseId, data.selectedItemIds);
+        const items = selectedItems(caseId, data.selectedItemIds ?? []);
+        rec.result['outbound_context'] = { item_ids: items.map(x => x.id), vehicle: pub.context.vehicle, location: pub.context.location };
         rec.result["selected_items"] = items.map(item => ({ ...item, status: 'pending', run_id: null, output: null }));
         rec.result["task_group_support"] = 'Unavailable; explicit host batch of individual Tasks, not a Parallel Task Group';
         rec.steps = items.map(item => ({ name: item.id, status: 'pending' }));
@@ -132,20 +133,21 @@ export const startLiveRun = createServerFn({ method: "POST" })
           child.status = 'submission_unknown'; // Persist BEFORE POST; never retry ambiguous submissions.
           await saveRun(context.supabase, context.userId, rec, dbId);
           rec.calls.task++;
-          const body = { processor: 'base', input: `${incrementalPrompt(caseId, child.question)}\nReviewer question: ${data.intent.question}\nPublic context: ${JSON.stringify(pub.context)}`, task_spec: TASK_TEMPLATES[caseId].task_spec };
+          const body = { processor: 'base', input: `${incrementalPrompt(caseId, child.question)}\nReviewer question: ${data.intent.question}\nPublic context: ${JSON.stringify(rec.result['outbound_context'])}`, task_spec: TASK_TEMPLATES[caseId].task_spec };
           const response: any = await parallelRequest('POST', '/v1/tasks/runs', body, { idempotent: false });
           if (!response.run_id) throw new ParallelError('submission_unknown', null, 'Task returned no ID; action required, no resubmission.');
           child.run_id = response.run_id; child.status = 'running';
           trace({ op: 'POST /v1/tasks/runs', transport: 'http', status: 'ok', request: { item_id: child.id, ...body }, response: { run_id: response.run_id } });
           await saveRun(context.supabase, context.userId, rec, dbId);
         }
-      } catch (e) { failRun(rec, e); }
+      } catch (e) { failRun(rec, e); if (rec.result['selected_items']?.some((c: any) => c.status === 'running')) rec.status = 'running'; }
       await saveRun(context.supabase, context.userId, rec, dbId); return rec;
     }
     if (caseId === 'UC03' || caseId === 'UC04') {
       try {
         let discovery: any = null;
-        if (caseId === 'UC03') {
+        if (data.parentDbId) await ownedPreviousResponse(rec, context, data.parentDbId);
+        if (caseId === 'UC03' && !data.parentDbId) {
           const body = { objective: `Find OTHER passenger-car rental branches, excluding equipment rental, aggregators and these brands: ${JSON.stringify(pub.context.excluded_supplier_groups)} ${pub.context.excluded_supplier}. Label duplicate locales and branch identities. Branch pages are not quotes.`, search_queries: [`passenger car rental ${pub.context.branch_area}`], mode: 'fast', advanced_settings: { max_results: 5 } };
           rec.calls.search++;
           discovery = await parallelRequest('POST', '/v1/search', body, { idempotent: false });
@@ -231,6 +233,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
           child.output = result.output; child.status = 'completed';
           const facts = normalizeTaskOutput(result.output, nowIso()).map(f => ({ ...f, fact_id: `${child.id}-${f.fact_id}`, entity_id: child.id }));
           rec.facts.push(...facts);
+          if (!facts.length) rec.gaps.push(`${child.id}: no normalized findings; inspect retained per-item output and Basis. Missing sold prices/applicability remain unknown.`);
           rec.trace.push(R({ at: nowIso(), op: 'selected-item result', transport: 'http', status: 'ok', response: { item_id: child.id, run_id: child.run_id, basis: result.output?.basis ?? [] } }));
         } catch (e) {
           if (e instanceof ParallelError && e.httpStatus === 408) continue;

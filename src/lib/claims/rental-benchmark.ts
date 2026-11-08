@@ -38,8 +38,14 @@ export function compareCompetitorQuotes(baseline: RunRecord, quotes: CompetitorQ
   const window = baseline.result["resolved_window"];
   const supplier = baseline.result["supplier_pricing"];
   const expected = { branch_area: `${input.location.zip} ${input.location.state}`, pickup_at: window?.pickup_at, return_at: window?.return_at, days: input.requested_days, vehicle_class: input.vehicle_class, seats: input.seats_needed, currency: "USD" };
+  const seen = new Set<string>();
   return quotes.map((q) => {
     const mismatches: string[] = [];
+    const identity = `${q.supplier.trim().toLowerCase()}|${q.branch_area?.trim().toLowerCase() ?? ''}`;
+    if (seen.has(identity)) mismatches.push('Duplicate supplier/branch or locale listing; not an independent competitor');
+    seen.add(identity);
+    if (/equipment|tool hire|heavy machinery/i.test(`${q.supplier} ${q.rate_basis ?? ''}`)) mismatches.push('Irrelevant equipment rental, not passenger cars');
+    if (/aggregator|broker|comparison site/i.test(q.rate_basis ?? '')) mismatches.push('Aggregator observation, independent supplier identity needs direct evidence');
     if (!q.supplier_identity_verified || !input.supplier_fixture.supplier_identity || q.supplier.toLowerCase() === input.supplier_fixture.supplier_identity.toLowerCase()) mismatches.push("Different supplier identity is not established");
     if (input.public_supplier_exclusion?.name.toLowerCase() === q.supplier.toLowerCase()) mismatches.push("Specified public supplier exclusion");
     if ((input.public_supplier_exclusion?.same_group_names ?? []).some((name) => name.toLowerCase() === q.supplier.toLowerCase())) mismatches.push("Specified public same-group supplier exclusion");
