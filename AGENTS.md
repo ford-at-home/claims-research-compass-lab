@@ -36,3 +36,4 @@ use the editor.
 - Fixture, Live and Replay are separate code paths; Replay only renders stored completed live runs, never fixture data.
 - Task runs are created once and resumed by stored `task_run_id`; no automatic resubmission.
 - Money and distances use `decimal.js` helpers in `src/lib/claims/calc.ts`; unknown components return null.
+- Shared workflow introductions live in a presentation-only component keyed by CaseId; proposed process diagrams never imply a live connection or completed research.
