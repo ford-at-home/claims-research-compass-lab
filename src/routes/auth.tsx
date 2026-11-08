@@ -30,17 +30,22 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMsg(error.message);
-      else nav({ to: "/" });
-    } else {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
-      if (error) setMsg(error.message);
-      else if (!data.session) setMsg("Check your email to confirm the account, then sign in.");
-      else nav({ to: "/" });
+    try {
+      if (mode === "in") {
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (error) setMsg(error.message);
+        else { setPassword(""); await nav({ to: "/" }); }
+      } else {
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: window.location.origin } });
+        if (error) setMsg(error.message);
+        else if (!data.session) { setPassword(""); setMsg("Check your email to confirm the account, then sign in."); }
+        else { setPassword(""); await nav({ to: "/" }); }
+      }
+    } catch {
+      setMsg("Sign-in service is unavailable. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   };
   return (
     <div className="mx-auto mt-16 max-w-sm rounded-lg border bg-card p-6">
@@ -49,20 +54,20 @@ function AuthPage() {
       <form onSubmit={submit} className="mt-4 space-y-3">
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy} />
         </div>
         <div>
           <Label htmlFor="pw">Password</Label>
-          <Input id="pw" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="pw" type="password" autoComplete={mode === "in" ? "current-password" : "new-password"} required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} />
         </div>
-        {msg && <p className="text-sm text-bad-foreground">{msg}</p>}
+        {msg && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}
         <Button type="submit" className="w-full" disabled={busy}>
-          {mode === "in" ? "Sign in" : "Sign up"}
+          {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Sign up"}
         </Button>
       </form>
-      <button className="mt-3 text-sm text-primary underline" onClick={() => setMode(mode === "in" ? "up" : "in")}>
+      <Button variant="link" className="mt-3 h-auto whitespace-normal px-0 text-sm" disabled={busy} onClick={() => { setMode(mode === "in" ? "up" : "in"); setMsg(null); setPassword(""); }}>
         {mode === "in" ? "Need an account? Sign up" : "Have an account? Sign in"}
-      </button>
+      </Button>
     </div>
   );
 }
