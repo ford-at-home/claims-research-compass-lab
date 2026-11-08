@@ -297,7 +297,11 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
                 {fact.qualifiers.length > 0 && <div className="text-xs"><span className="text-muted-foreground">Qualifiers: </span>{fact.qualifiers.join(" · ")}</div>}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground">Exact source excerpts</h3>
-                  {fact.citations.length === 0 && <p className="text-xs text-warn-foreground">No citation — non-actionable.</p>}
+                  {fact.citations.length === 0 && (
+                    <p className="text-xs text-warn-foreground">
+                      {fact.origin === "calculation" ? "Local calculation — see formula and input facts above." : "No citation — non-actionable."}
+                    </p>
+                  )}
                   {fact.citations.map((c, i) => (
                     <div key={i} className="rounded border p-2">
                       {c.url ? (
