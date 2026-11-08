@@ -1,4 +1,4 @@
-import { dec, distanceKm, lossWindowUtc, minus, overlaps, resolveRentalWindow, sum, times } from "./calc";
+import { dec, distanceKm, lossWindowUtc, minus, overlaps, sum, times } from "./calc";
 import { buildPublicContext } from "./public-context";
 import { containsCanary } from "./redact";
 import { MOCK_ENTERPRISE, PARALLEL_MCP, STORYBOARDS } from "./spec";
