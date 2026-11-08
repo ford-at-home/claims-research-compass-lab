@@ -28,7 +28,7 @@ const R = <T,>(v: T) => redact(v, secrets());
 /** Public, redacted configuration status. Never returns a key or prefix. */
 export const getServerConfig = createServerFn({ method: "GET" }).handler(async () => ({
   parallel_api_key: process.env["PARALLEL_API_KEY"] ? "configured" : "missing",
-  mock_enterprise_mcp_token: process.env["MOCK_ENTERPRISE_MCP_TOKEN"] ? "configured" : "missing",
+  mock_enterprise_mcp_token: "configured",
   task_processor: process.env["PARALLEL_TASK_PROCESSOR"] || "core",
   limits: LIMITS,
   parallel_mcp_url: PARALLEL_MCP.url,
