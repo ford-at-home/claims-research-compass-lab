@@ -352,6 +352,7 @@ async function completeResponse(rec: RunRecord, context: any, dbId: string, pare
     const quotes = competitorTaskOutputSchema.safeParse(parsed.structured);
     if (!quotes.success) throw new ParallelError('schema', null, 'Responses quote schema invalid; no inferred rates.');
     rec.result['competitor_comparisons'] = compareCompetitorQuotes(rec.result['baseline_snapshot'], quotes.data.quotes, nowIso());
+    rec.facts.push(...rec.result['competitor_comparisons'].map((q: any, i: number) => fact({ fact_id: `competitor-${i}`, entity_id: q.supplier, attribute: 'public_retail_rental_total', evidence_type: 'posted_rate', origin: 'live_web', status: q.comparable ? 'candidate' : 'insufficient', number_decimal: q.total_usd, unit: 'USD', currency: 'USD', qualifiers: [...q.mismatches, 'Model-reported excerpt; independently verify numeric support before action'], citations: q.url && q.excerpt ? [{source_ref:q.url,url:q.url,excerpt:q.excerpt}] : [] }, nowIso())));
     rec.result['benchmark_purpose'] = quotes.data.benchmark_purpose;
     rec.summary = 'Public competitor research complete. Missing dates, rates, fees or inventory remain unknown and unranked.';
   }
