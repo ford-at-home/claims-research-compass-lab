@@ -2,6 +2,7 @@ import { baselineSchema, BASELINE_INFO } from "./baseline";
 import { emptyRun, fact, runFixture } from "./fixtures";
 import { mockSupplierAdapter, rentalScenarioSchema, runRentalBaseline } from "./rental";
 import type { CaseId, Mode, RunRecord } from "./types";
+import { selectedItems, CAPABILITIES, lateRecordDiff } from './capability-upgrade';
 
 export type BaselineAdapter = { read: (caseId: CaseId, input: unknown) => { status: "ok" | "error" | "incomplete" | "unconfigured"; answered_questions: string[]; coverage: string[]; error?: string } };
 export function runBaseline(caseId: CaseId, wrapper: unknown, hash: string, mode: Mode, adapter: BaselineAdapter, now = new Date().toISOString()): RunRecord {
@@ -36,6 +37,15 @@ export function runBaselineFixture(caseId: CaseId, wrapper: unknown, hash: strin
   return runBaseline(caseId, wrapper, hash, "fixture", mockBaselineAdapter, now);
 }
 // Retain the imported arithmetic walkthroughs only as explicitly simulated OUTSIDE research.
-export function runIncrementalFixture(caseId: CaseId, wrapper: unknown, hash: string) {
-  return runFixture(caseId, wrapper, hash);
+export function runIncrementalFixture(caseId: CaseId, wrapper: unknown, hash: string, selectedIds?: string[]) {
+  const run = runFixture(caseId, wrapper, hash);
+  run.result['capability'] = CAPABILITIES[caseId];
+  if ((caseId === 'UC01' || caseId === 'UC02') && selectedIds) {
+    const items = selectedItems(caseId, selectedIds);
+    const now = run.created_at;
+    run.result['selected_items'] = items.map(item => ({ ...item, status: 'SIMULATED complete', run_id: null, output: { basis: [], notes: 'Fabricated per-item walkthrough, not live Basis' } }));
+    for (const item of items) run.facts.push(fact({fact_id:`sim-${item.id}`, entity_id:item.id, attribute:caseId === 'UC01' ? 'auction_status_access' : 'publication_applicability', evidence_type:'other', origin:'simulated_fixture', status:'simulated', value_text:caseId === 'UC01' ? 'SIMULATED: sale pending is not a completed transaction. Realized sale and sold-record access remain unknown.' : 'SIMULATED: general bumper/ADAS guidance requires exact vehicle and publication applicability review. No VIN fitment or calibration determination.', qualifiers:['Fabricated evidence; no live provider ID, excerpt or transaction'], citations:[{source_ref:`mock://selected/${item.id}`,url:null,excerpt:'SIMULATED per-item evidence only; not retrieved manufacturer or auction content.'}]},now));
+  }
+  if (caseId === 'UC04') run.result['late_record_diff'] = lateRecordDiff;
+  return run;
 }

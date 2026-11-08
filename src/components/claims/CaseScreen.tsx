@@ -272,9 +272,8 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
               try {
                 const updatedInput = caseId === "UC05" ? { ...parsed.value, input: { ...parsed.value.input, question: exceptionQuestion } } : parsed.value;
                 const parentDbId = followup ? run?.provider_ids['db_run_id'] : undefined;
-                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineSource, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId } }) : await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId, selectedItemIds: caseId === 'UC01' || caseId === 'UC02' ? selectedIds : undefined } });
+                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash, selectedIds) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineSource, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId } }) : await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId, selectedItemIds: caseId === 'UC01' || caseId === 'UC02' ? selectedIds : undefined } });
                 r.result['capability'] = CAPABILITIES[caseId];
-                if (mode === 'fixture' && (caseId === 'UC01' || caseId === 'UC02')) r.result['selected_items'] = selectedItems(caseId, selectedIds).map(x => ({ ...x, status: 'SIMULATED complete', run_id: null, output: { basis: [], notes: 'Fabricated walkthrough, not a provider capture' } }));
                 r.result = { ...r.result, scope_version: "baseline-first-v2", research_intent: intent, baseline_snapshot: baseline, incremental_metrics: incrementalMetrics(baseline, r) };
                 setRun(r);
                 if (mode === "fixture") { saveFixtureRun(r); setHistory(loadFixtureRuns(caseId).filter((x) => x.result["scope_version"] === "baseline-first-v2")); }
@@ -433,7 +432,7 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
           ))}
         </div>
         <div className="mt-2 font-mono text-[11px] text-muted-foreground">
-          calls — search {run.calls.search}/{LIMITS.maxSearchRequests} · extract urls {run.calls.extract_urls}/{LIMITS.maxExtractUrls} · task {run.calls.task}/{LIMITS.maxTaskCreates} · mcp tools {run.calls.mcp}/{LIMITS.maxMcpToolCalls}
+          calls — search {run.calls.search}/{LIMITS.maxSearchRequests} · extract urls {run.calls.extract_urls}/{LIMITS.maxExtractUrls} · task {run.calls.task}/{LIMITS.maxTaskCreates} · responses {run.result['responses_calls'] ?? 0} · mcp tools {run.calls.mcp}/{LIMITS.maxMcpToolCalls}
           {Object.entries(run.provider_ids).map(([k, v]) => ` · ${k}: ${v}`)}
         </div>
       </div>
