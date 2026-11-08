@@ -3,6 +3,7 @@
 export class McpHttpClient {
   private sessionId: string | null = null;
   private nextId = 1;
+  private protocolVersion = '2025-03-26';
   constructor(
     private url: string,
     private headers: Record<string, string>,
@@ -15,6 +16,7 @@ export class McpHttpClient {
       headers: {
         "content-type": "application/json",
         accept: "application/json, text/event-stream",
+        'mcp-protocol-version': this.protocolVersion,
         ...(this.sessionId ? { "mcp-session-id": this.sessionId } : {}),
         ...this.headers,
       },
@@ -23,12 +25,12 @@ export class McpHttpClient {
     });
     const sid = res.headers.get("mcp-session-id");
     if (sid) this.sessionId = sid;
-    if (notify) return null;
     const text = await res.text();
     if (!res.ok) throw new Error(`MCP ${method} HTTP ${res.status}: ${text.slice(0, 300)}`);
+    if (notify) return null;
     let msg: any = null;
     if ((res.headers.get("content-type") ?? "").includes("text/event-stream")) {
-      for (const block of text.split(/\n\n/)) {
+      for (const block of text.replace(/\r\n/g, '\n').split(/\n\n/)) {
         const data = block.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).join("\n");
         if (!data) continue;
         try {
@@ -38,7 +40,7 @@ export class McpHttpClient {
           /* ignore */
         }
       }
-    } else msg = JSON.parse(text);
+    } else { const parsed = JSON.parse(text); if (parsed.id === id) msg = parsed; }
     if (!msg) throw new Error(`MCP ${method}: no response for id ${id}`);
     if (msg.error) throw new Error(`MCP ${method} error ${msg.error.code}: ${msg.error.message}`);
     return msg.result;
@@ -46,6 +48,7 @@ export class McpHttpClient {
 
   async initialize() {
     const r = await this.rpc("initialize", { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "claims-research-lab", version: "1.0.0" } });
+    if (typeof r?.protocolVersion === 'string') this.protocolVersion = r.protocolVersion;
     await this.rpc("notifications/initialized", {}, true);
     return r;
   }
@@ -62,12 +65,15 @@ export function toolText(result: any): string {
 }
 
 /** Fill tool arguments from its advertised inputSchema using only public values. */
-export function buildToolArgs(schema: any, values: { text: string; queries: string[]; urls: string[] }): Record<string, unknown> {
+export function buildToolArgs(schema: any, values: { text: string; queries: string[]; urls: string[]; previousResponseId?: string }): Record<string, unknown> {
   const props: Record<string, any> = schema?.properties ?? {};
   const out: Record<string, unknown> = {};
   for (const [k, p] of Object.entries(props)) {
     const isArr = p?.type === "array";
     if (/^(search_queries|queries)$/.test(k)) out[k] = values.queries;
+    else if (k === 'previous_response_id' && values.previousResponseId) out[k] = values.previousResponseId;
+    else if (k === 'reasoning_effort') out[k] = 'low';
+    else if (k === 'allow_live_fetch') out[k] = true;
     else if (/^urls$/.test(k)) out[k] = values.urls;
     else if (/^url$/.test(k)) out[k] = values.urls[0];
     else if (/^(objective|query|question|input|prompt|task)$/.test(k)) out[k] = isArr ? [values.text] : values.text;

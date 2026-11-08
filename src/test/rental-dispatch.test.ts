@@ -17,28 +17,27 @@ import { FIXTURE_INPUTS } from "@/lib/claims/spec";
 import { inputHash } from "@/lib/claims/hash";
 
 describe("UC03 server dispatch", () => {
-  it("explicit competitor dispatch sends only outside competitor research and persists a single Task", async () => {
+  it("explicit competitor dispatch sends only outside competitor research and persists a genuine Responses ID", async () => {
     const input = FIXTURE_INPUTS.UC03;
     const baseline = runBaselineFixture("UC03", input, await inputHash(input));
     baseline.mode = "live";
     baseline.result["baseline_source"] = "demo";
     baseline.result["owner_id"] = "owner";
     const key = vi.mocked(getKey).mockReturnValue("test-only-key");
-    const request = vi.mocked(parallelRequest).mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : { run_id: "competitor-task" });
+    const request = vi.mocked(parallelRequest).mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : { id: "competitor-response", output: [{type:"message",content:[{type:"output_text",text:JSON.stringify({benchmark_purpose:"competitor_market_benchmark",quotes:[]}),annotations:[]}]}] });
     const selection = { eq: () => selection, single: async () => ({ data: { result: baseline }, error: null }) };
     const from = () => ({ select: () => selection, insert: () => ({ select: () => ({ single: async () => ({ data: { id: "stored-benchmark" }, error: null }) }) }), update: () => ({ eq: async () => ({ error: null }) }) });
     const handler = startLiveRun as unknown as (args: unknown) => Promise<{ provider_ids: Record<string, string> }>;
     const r = await handler({ data: { caseId: "UC03", input, baselineSource: "demo", baselineId: "baseline-id", intent: { action: "benchmark_competitor_rates", question: "Competitor prices same area", reason: "requested_benchmark" } }, context: { userId: "owner", supabase: { from } } });
     const calls = request.mock.calls;
-    expect(calls.map((c) => c[1])).toEqual(["/v1/search", "/v1/tasks/runs"]);
+    expect(calls.map((c) => c[1])).toEqual(["/v1/search", "/v1/responses"]);
     expect(JSON.stringify(calls)).not.toContain("50.00");
     expect(JSON.stringify(calls)).toContain("DIFFERENT suppliers");
-    const task = calls.find((c) => c[1] === "/v1/tasks/runs")?.[2] as { task_spec: { output_schema: { json_schema: { required: string[]; properties: { benchmark_purpose: { enum: string[] } } } } }; input: { public_case_context: { benchmark_purpose: string }; research_scope: { specific_question: string } } };
-    expect(task.task_spec.output_schema.json_schema.required).toContain("benchmark_purpose");
-    expect(task.task_spec.output_schema.json_schema.properties.benchmark_purpose.enum).toEqual(["competitor_market_benchmark"]);
-    expect(task.input.public_case_context.benchmark_purpose).toBe("competitor_market_benchmark");
-    expect(task.input.research_scope.specific_question).toBe("Competitor prices same area");
-    expect(r.provider_ids["task_run_id"]).toBe("competitor-task");
+    const response = calls.find(c => c[1] === '/v1/responses')?.[2] as any;
+    expect(response.text.format.schema.required).toContain('benchmark_purpose');
+    expect(response.text.format.schema.properties.benchmark_purpose.enum).toEqual(['competitor_market_benchmark']);
+    expect(response.input).toContain('Competitor prices same area');
+    expect(r.provider_ids['response_id']).toBe('competitor-response');
     key.mockReset(); key.mockImplementation(() => { throw new Error("Parallel must not be reached"); }); request.mockReset();
   });
   for (const caseId of ["UC01", "UC02", "UC04", "UC05"]) it(`${caseId} primary server dispatch never reaches Parallel`, async () => {

@@ -60,4 +60,12 @@ describe("all five existing-capability-first workflows", () => {
     expect(quotes[2].delta_vs_supplier_usd).toBeNull();
     expect(r.calls).toEqual({ search: 0, extract_urls: 0, task: 0, decisions: 0, mcp: 0 });
   });
+  it('does not rank duplicate branches, equipment rentals or aggregator-only observations', () => {
+    const b = runBaselineFixture('UC03', FIXTURE_INPUTS.UC03, 'hash');
+    const q = runBenchmarkFixture(b, 'hash').result['competitor_comparisons'][0];
+    const duplicates = compareCompetitorQuotes(b, [q, q], new Date().toISOString());
+    expect(duplicates[1]?.total_usd).toBeNull();
+    expect(compareCompetitorQuotes(b, [{...q, supplier:'Equipment Rental'}], new Date().toISOString())[0]?.total_usd).toBeNull();
+    expect(compareCompetitorQuotes(b, [{...q, rate_basis:'aggregator'}], new Date().toISOString())[0]?.total_usd).toBeNull();
+  });
 });

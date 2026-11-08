@@ -42,7 +42,7 @@ export const TASK_OUTPUT_SCHEMA: any = taskOutputSchema;
 export const LIMITS = {
   maxSearchRequests: 4,
   maxExtractUrls: 8,
-  maxTaskCreates: 1,
+  maxTaskCreates: 2,
   maxDecisions: 1,
   maxMcpToolCalls: 8,
   httpTimeoutMs: 30_000,

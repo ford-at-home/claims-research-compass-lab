@@ -17,4 +17,8 @@
 - [x] Update rental title/metadata; 55 tests pass, all 48 source hashes unchanged, comparison/evidence and mobile checked.
 - [x] Add explicit Live demo baseline selection, persisted ownership/source/hash gates and mock MCP behavior.
 - [x] Separate simulated primary and live external evidence in display/export; 105 tests pass, all five source controls/mobile checked, automatic build OK.
-- [ ] Authenticated real-user end-to-end verification: no app auth account exists; no paid provider calls or new credentials requested.
+- [x] Focused compatible capability upgrade: selected-only per-item Tasks, interactive Responses, explicit Search/scope adaptations, Monitor previews and MCP parsing.
+- [x] Verify suite, five fixture flows, narrow layout, automatic check and minimal public smoke attempt; document access limitations.
+- [ ] Native Task Groups/Place Search/Decisions/Parallel MCP: saved gateway does not expose these endpoints; explicit compatible implementations are labeled.
+- [ ] Live provider validation: configured saved credential rejected with HTTP 401 Credential not found after one gateway credential refresh; connection authorization repair required.
+- [ ] Authenticated real-user end-to-end verification: no app auth account exists; do not create an account or weaken authentication.

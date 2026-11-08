@@ -5,7 +5,7 @@ vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
 vi.mock("@tanstack/react-start/server", () => ({ getRequest: () => new Request("http://localhost:8080", { headers: { authorization: "Bearer test-session" } }) }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
 vi.mock("@/lib/claims/parallel.server", () => ({ getKey: vi.fn(() => "test-key"), parallelRequest: vi.fn(), ParallelError: class extends Error {} }));
-import { startLiveRun, runWarRoomLive } from "@/lib/claims/research.functions";
+import { startLiveRun, runWarRoomLive, resumeLiveRun } from "@/lib/claims/research.functions";
 import { getKey, parallelRequest } from "@/lib/claims/parallel.server";
 import { FIXTURE_INPUTS } from "@/lib/claims/spec";
 import { handleMockEnterpriseRpc } from "@/lib/claims/mock-enterprise";
@@ -31,7 +31,7 @@ async function baseline(id: CaseId) {
 beforeEach(() => {
   wire.length = 0;
   vi.mocked(getKey).mockReset().mockReturnValue("test-key");
-  vi.mocked(parallelRequest).mockReset().mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : { run_id: "test-task" });
+  vi.mocked(parallelRequest).mockReset().mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : path === "/v1/responses" ? { id: "actual-mocked-response", output: [{type:"message",content:[{type:"output_text",text: JSON.stringify({benchmark_purpose:"competitor_market_benchmark",quotes:[]}),annotations:[]}]}] } : { run_id: "test-task" });
   vi.stubGlobal("fetch", vi.fn(async (url: string, options: RequestInit) => {
     const body = JSON.parse(String(options.body));
     wire.push({ url: String(url), body, authorization: new Headers(options.headers).get("authorization") });
@@ -44,6 +44,33 @@ beforeEach(() => {
   }));
 });
 describe("explicit Live demo baselines", () => {
+  it('creates only selected children, persists IDs and preserves partial polling results', async () => {
+    const {rec} = await baseline('UC02'); const db = store(rec);
+    let count = 0;
+    vi.mocked(parallelRequest).mockImplementation(async () => ({run_id:`child-${++count}`}));
+    const output = await start({data:{caseId:'UC02',input:FIXTURE_INPUTS.UC02,baselineSource:'demo',baselineId:'stored-id',intent:intent('UC02'),selectedItemIds:['bumper-guidance','calibration-applicability']},context:db.context});
+    expect(output.result['selected_items'].map((c:any) => c.run_id)).toEqual(['child-1','child-2']);
+    expect(parallelRequest).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(vi.mocked(parallelRequest).mock.calls)).not.toContain('estimate_price_usd');
+    vi.mocked(parallelRequest).mockImplementation(async (_m,path) => { if(path.includes('child-2')) throw new Error('temporarily pending'); return {output:{content:{findings:[]},basis:[{field:'finding',confidence:'low'}]}}; });
+    const resumed = await (resumeLiveRun as unknown as (a:any)=>Promise<RunRecord>)({data:{dbId:'stored-id'},context:store(output).context});
+    expect(resumed.result['selected_items'][0].status).toBe('completed');
+    expect(resumed.result['selected_items'][0].output.basis).toHaveLength(1);
+    expect(resumed.result['selected_items'][1].status).toBe('running');
+    expect(resumed.status).toBe('running');
+  });
+  it('uses only an owned returned previous response ID and blocks cross-owner followups', async () => {
+    const {rec:primary} = await baseline('UC04');
+    const parent = await start({data:{caseId:'UC04',input:FIXTURE_INPUTS.UC04,baselineSource:'demo',baselineId:'stored-id',intent:intent('UC04')},context:store(primary).context});
+    const db=store(primary); let reads=0;
+    db.selection.single = async () => ({data:{result:++reads===1 ? primary : parent},error:null});
+    vi.mocked(parallelRequest).mockClear();
+    await start({data:{caseId:'UC04',input:FIXTURE_INPUTS.UC04,baselineSource:'demo',baselineId:'stored-id',intent:intent('UC04','Explicit public followup'),parentDbId:'parent-id'},context:db.context});
+    expect(parallelRequest).toHaveBeenCalledWith('POST','/v1/responses',expect.objectContaining({previous_response_id:'actual-mocked-response'}),expect.anything());
+    parent.result['owner_id']='other'; reads=0; vi.mocked(parallelRequest).mockClear();
+    const blocked=await start({data:{caseId:'UC04',input:FIXTURE_INPUTS.UC04,baselineSource:'demo',baselineId:'stored-id',intent:intent('UC04'),parentDbId:'parent-id'},context:db.context});
+    expect(blocked.status).toBe('error'); expect(parallelRequest).not.toHaveBeenCalled();
+  });
   for (const id of ids) {
     it(`${id}: selected demo loads an owned simulated baseline without Parallel`, async () => {
       const { rec, db } = await baseline(id);
@@ -58,16 +85,17 @@ describe("explicit Live demo baselines", () => {
     });
     it(`${id}: explicit outside action reaches mocked provider only after demo baseline`, async () => {
       const { rec } = await baseline(id); const db = store(rec);
-      const data = { caseId: id, input: FIXTURE_INPUTS[id], baselineSource: "demo", baselineId: "stored-id", intent: intent(id) };
+      const data = { caseId: id, input: FIXTURE_INPUTS[id], baselineSource: "demo", baselineId: "stored-id", intent: intent(id), selectedItemIds: id === "UC01" ? ["auction-status"] : id === "UC02" ? ["bumper-guidance"] : undefined };
       const output = await (id === "UC05" ? war : start)({ data, context: db.context });
       expect(output.result["demonstration_notice"]).toContain("not real supplier savings");
       expect(db.selection.eq).toHaveBeenCalledWith("user_id", "owner");
       if (id === "UC05") {
         expect(output.status).toBe("completed");
-        expect(wire.some((w) => w.url.includes("parallel.ai") && w.body.params?.name === "web_research")).toBe(true);
+        expect(parallelRequest).toHaveBeenCalledWith("POST", "/v1/responses", expect.anything(), expect.anything());
+        expect(wire.some(w => w.url.includes("parallel.ai"))).toBe(false);
         expect(JSON.stringify(wire.filter((w) => w.url.includes("parallel.ai")))).not.toContain("MOCK_INTERNAL_ONLY_9F");
         expect(wire.filter((w) => w.url.includes("mock-enterprise-mcp")).map((w) => w.body.method)).toContain("tools/list");
-      } else expect(parallelRequest).toHaveBeenCalledWith("POST", "/v1/tasks/runs", expect.anything(), expect.anything());
+      } else expect(parallelRequest).toHaveBeenCalledWith("POST", id === "UC03" || id === "UC04" ? "/v1/responses" : "/v1/tasks/runs", expect.anything(), expect.anything());
     });
     for (const block of ["answered", "missing-key", "cross-owner", "wrong-source", "unauthorized", "missing-baseline", "connected-error"] as const) it(`${id}: ${block} makes no external calls`, async () => {
       const { rec } = await baseline(id);
