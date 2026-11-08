@@ -1,0 +1,3 @@
+- [x] Add pilot descriptions and supplied dependencies to all five workflow pages.
+- [x] Add a distinct visual research sequence above each scenario input.
+- [x] Verify all five pages at desktop and mobile sizes.

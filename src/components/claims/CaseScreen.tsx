@@ -20,6 +20,7 @@ import { download, runReviews, toReport } from "@/lib/claims/export";
 import { listStoredRuns, resumeLiveRun, runWarRoomLive, startLiveRun } from "@/lib/claims/research.functions";
 import { Chip, Mono, ORIGIN_LABEL, originTone, statusTone } from "./ui-bits";
 import { cn } from "@/lib/utils";
+import { WorkflowIntro } from "./WorkflowIntro";
 
 const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
@@ -156,10 +157,11 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
         <div>
           <div className="font-mono text-xs text-primary">{caseId}</div>
           <h1 className="text-2xl font-semibold">{meta.title}</h1>
-          <p className="text-sm text-muted-foreground">{meta.visible}</p>
         </div>
         <ModeSelector mode={mode} onChange={(m) => { setMode(m); setRun(null); setProgress(null); }} />
       </div>
+
+      <WorkflowIntro caseId={caseId} />
 
       <div className={cn("rounded-md border px-3 py-2 text-sm", mode === "fixture" ? "border-sim-foreground/30 bg-sim text-sim-foreground" : mode === "live" ? "bg-live text-live-foreground" : "bg-replay text-replay-foreground")}>
         <strong className="uppercase tracking-wide">{mode}</strong> — {MODE_LABEL[mode]}.{" "}
