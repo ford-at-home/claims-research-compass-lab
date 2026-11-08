@@ -124,7 +124,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
     if (caseId === 'UC01' || caseId === 'UC02') {
       try {
         const items = selectedItems(caseId, data.selectedItemIds ?? []);
-        rec.result['outbound_context'] = { item_ids: items.map(x => x.id), vehicle: pub.context.vehicle, location: pub.context.location };
+        rec.result['outbound_context'] = { item_ids: items.map(x => x.id), vehicle: (pub.context as Record<string, unknown>)["vehicle"], location: (pub.context as Record<string, unknown>)["location"] };
         rec.result["selected_items"] = items.map(item => ({ ...item, status: 'pending', run_id: null, output: null }));
         rec.result["task_group_support"] = 'Unavailable; explicit host batch of individual Tasks, not a Parallel Task Group';
         rec.steps = items.map(item => ({ name: item.id, status: 'pending' }));
@@ -158,59 +158,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
       } catch (e) { failRun(rec, e); }
       await saveRun(context.supabase, context.userId, rec, dbId); return rec;
     }
-    const retries = { count: 0 };
-    const excerpts: any[] = [];
-    try {
-      // Search (1 of max 4)
-      const tpl = SEARCH_TEMPLATES[caseId];
-      const searchBody = { objective: incrementalPrompt(caseId, data.intent.question), mode: "fast", search_queries: [data.intent.question.slice(0, 180)], advanced_settings: { max_results: 5 } };
-      rec.calls.search++;
-      const sres: any = await parallelRequest("POST", "/v1/search", searchBody, { idempotent: true, retries });
-      const sessionId: string | null = sres?.session_id ?? null;
-      if (sres?.search_id) rec.provider_ids["search_id"] = sres.search_id;
-      const results: any[] = Array.isArray(sres?.results) ? sres.results : [];
-      for (const r of results) excerpts.push({ url: r.url, title: r.title ?? null, publish_date: r.publish_date ?? null, excerpts: r.excerpts ?? [], via: "search", retrieved_at: nowIso() });
-      trace({ op: "POST /v1/search", transport: "http", status: "ok", request: searchBody, response: { search_id: sres?.search_id, result_count: results.length, urls: results.map((r) => r.url) } });
-      rec.coverage.push({ category: "search", status: results.length ? "searched" : "not_available", notes: `${results.length} results` });
-      step(1, "done");
-      // Extract (up to 8 URLs)
-      const urls = results.map((r) => r.url).filter(Boolean).slice(0, Math.min(LIMITS.maxExtractUrls, 5));
-      if (urls.length) {
-        const exBody = { urls, objective: data.intent.question, advanced_settings: { excerpt_settings: { max_chars_per_result: 4000 } } };
-        rec.calls.extract_urls += urls.length;
-        try {
-          const eres: any = await parallelRequest("POST", "/v1/extract", exBody, { idempotent: true, retries });
-          for (const r of eres?.results ?? []) excerpts.push({ url: r.url, title: r.title ?? null, publish_date: r.publish_date ?? null, excerpts: r.excerpts ?? [], via: "extract", retrieved_at: nowIso() });
-          for (const er of eres?.errors ?? []) rec.coverage.push({ category: `extract ${er.url ?? ""}`, status: "blocked", notes: String(er.error_type ?? er.message ?? "access failure") });
-          trace({ op: "POST /v1/extract", transport: "http", status: "ok", request: exBody, response: { extract_id: eres?.extract_id, ok: (eres?.results ?? []).length, errors: (eres?.errors ?? []).length } });
-          step(2, "done");
-        } catch (e) {
-          trace({ op: "POST /v1/extract", transport: "http", status: "error", request: exBody, note: (e as Error).message });
-          rec.coverage.push({ category: "extract", status: "blocked", notes: R((e as Error).message) });
-          step(2, "error");
-        }
-      } else step(2, "skipped");
-      // Task create (max 1) — no automatic resubmission
-      const t = structuredClone(TASK_TEMPLATES[caseId]);
-      t.processor = process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
-      t.input.research_instructions = incrementalPrompt(caseId, data.intent.question);
-      t.input.public_case_context = pub.context;
-      t.input.research_scope = { specific_question: data.intent.question, primary_response_public_summary: null, purpose: "unanswered_external_question", execute_only_after_local_gate: true };
-      t.input.discovered_source_excerpts = excerpts.slice(0, 12).map((x) => ({ ...x, excerpts: (x.excerpts ?? []).slice(0, 3).map((s: string) => String(s).slice(0, 1500)) }));
-      if (containsCanary(t)) throw new Error("Outbound request contained private canary; aborted");
-      rec.calls.task++;
-      trace({ op: "POST /v1/tasks/runs", transport: "http", status: "ok", request: { ...t, task_spec: { output_schema: { type: "json", json_schema: "[schema object from template]" } } } });
-      const tres: any = await parallelRequest("POST", "/v1/tasks/runs", t, { idempotent: false });
-      rec.provider_ids["task_run_id"] = tres.run_id;
-      const lastTrace = rec.trace[rec.trace.length - 1];
-      if (lastTrace) lastTrace.response = { run_id: tres.run_id, status: tres.status };
-      step(3, "done");
-    } catch (e) {
-      failRun(rec, e);
-    }
-    (rec.result as any).discovered_source_excerpts = excerpts;
-    (rec.result as any).retries = retries.count;
-    await saveRun(context.supabase, context.userId, rec, dbId);
+    rec.status = 'blocked'; rec.error = 'No supported research action selected.';
     return rec;
   });
 
