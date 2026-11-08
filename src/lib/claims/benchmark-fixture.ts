@@ -13,7 +13,11 @@ export function runBenchmarkFixture(baseline: RunRecord, hash: string) {
   quote.days = observation.days;
   quote.required_fees = observation.mandatory_fees_usd;
   quote.rate_basis = observation.rate_basis;
-  const comparisons = compareCompetitorQuotes(baseline, [quote, { ...quote, supplier: "SIMULATED mismatched candidate", seats: null, required_fees: null, supported_terms: [] }], now);
+  quote.supplier = "SIMULATED competitor A";
+  quote.excerpt = `SIMULATED competitor A: ${quote.pickup_at} to ${quote.return_at}, midsize, five seats, 23220 VA, three days; 45.00 USD/day plus 18.00 USD mandatory fees. Fabricated public retail quote, advertised availability only.`;
+  const second: CompetitorQuote = { ...quote, supplier: "SIMULATED competitor B", daily_rate: "48.00", required_fees: "12.00", url: "https://simulation.invalid/competitor-b", excerpt: `SIMULATED competitor B: ${quote.pickup_at} to ${quote.return_at}, midsize, five seats, 23220 VA, three days; 48.00 USD/day plus 12.00 USD mandatory fees. Fabricated public retail quote, advertised availability only.` };
+  const incomplete: CompetitorQuote = { ...quote, supplier: "SIMULATED incomplete candidate", daily_rate: null, seats: null, required_fees: null, quoted_at: null, supported_terms: [], excerpt: "SIMULATED incomplete candidate: no retrievable dated quote; seating and mandatory fees unknown. No amount or availability established." };
+  const comparisons = compareCompetitorQuotes(baseline, [quote, second, incomplete], now);
   rec.result = { scope_version: "baseline-first-v2", spec_revision: "2026-11-08-existing-systems-first", benchmark_purpose: "competitor_market_benchmark", competitor_comparisons: comparisons, baseline_snapshot: baseline };
   rec.facts = comparisons.map((q, i) => fact({ fact_id: `sim-competitor-${i}`, entity_id: q.supplier, attribute: "public_retail_rental_total", origin: "simulated_fixture", evidence_type: "posted_rate", status: q.comparable ? "simulated" : "insufficient", number_decimal: q.total_usd, unit: "USD", currency: "USD", qualifiers: q.mismatches, citations: [{ source_ref: "fixture://competitor-benchmark", url: null, excerpt: q.excerpt ?? "SIMULATED unknown" }] }, now));
   rec.summary = "SIMULATED competitor benchmark. Base market total excludes switching costs; incomplete terms stay non-comparable. No provider calls.";

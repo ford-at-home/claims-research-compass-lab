@@ -40,10 +40,24 @@ describe("all five existing-capability-first workflows", () => {
     expect(quotes[0].total_usd).toBe("153.00");
     expect(quotes[0].delta_vs_supplier_usd).toBe("3.00");
     expect(quotes[0].separate_switching_scenario.total_including_switching_usd).toBe("188.00");
-    expect(quotes[1].total_usd).toBeNull();
-    expect(quotes[1].mismatches.length).toBeGreaterThan(0);
+    expect(quotes[2].total_usd).toBeNull();
+    expect(quotes[2].mismatches.length).toBeGreaterThan(0);
     const same = { ...quotes[0], supplier: "SIMULATED integrated supplier" };
     expect(compareCompetitorQuotes(b, [same], new Date().toISOString())[0]?.comparable).toBe(false);
     expect(compareCompetitorQuotes(b, [{ ...quotes[0], quoted_at: "2020-01-01T00:00:00Z" }], new Date().toISOString())[0]?.total_usd).toBeNull();
+  });
+  it("two complete simulated competitors retain deterministic totals and an unknown unranked candidate", () => {
+    const b = runBaselineFixture("UC03", FIXTURE_INPUTS.UC03, "hash");
+    const r = runBenchmarkFixture(b, "hash");
+    const quotes = r.result["competitor_comparisons"];
+    expect(quotes).toHaveLength(3);
+    expect(quotes.filter((q: any) => q.comparable)).toHaveLength(2);
+    expect(quotes[1].total_usd).toBe("156.00");
+    expect(quotes[1].delta_vs_supplier_usd).toBe("6.00");
+    expect(quotes[1].delta_vs_supplier_percent).toBe("4.00");
+    expect(quotes[1].separate_switching_scenario.total_including_switching_usd).toBe("191.00");
+    expect(quotes[2].total_usd).toBeNull();
+    expect(quotes[2].delta_vs_supplier_usd).toBeNull();
+    expect(r.calls).toEqual({ search: 0, extract_urls: 0, task: 0, decisions: 0, mcp: 0 });
   });
 });
