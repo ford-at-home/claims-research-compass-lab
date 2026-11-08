@@ -10,9 +10,12 @@ export function toReport(run: RunRecord, reviews: Record<string, Review>): strin
   L.push(`# ${run.case_id} research run ${run.run_id}`, "");
   L.push(`Mode: ${run.mode.toUpperCase()} — ${run.label}`);
   if (run.mode === "fixture") L.push("**SIMULATED: all observations below are fabricated for an offline demonstration.**");
+  if (run.result["baseline_source"] === "demo") L.push("**SIMULATED PRIMARY BASELINE (intentional demo). Live web evidence is separate. Deltas against fabricated values are demonstration arithmetic, not real supplier savings or insurer quotes.**", `Baseline source: demo; reference: ${run.result["baseline_id"] ?? run.provider_ids["db_run_id"] ?? run.run_id}`);
   L.push(`Status: ${run.status}`, `Created: ${run.created_at}`, `Captured: ${run.captured_at ?? "n/a"}`, `Input hash: ${run.input_hash}`, "");
   if (run.error) L.push(`Error: ${run.error}`, "");
   if (run.summary) L.push("## Summary", run.summary, "");
+  const primary = run.result["baseline_snapshot"] as RunRecord | undefined;
+  if (primary) L.push("## Primary baseline — SIMULATED when demo selected", ...primary.facts.map((f) => `- [${f.origin}, ${f.status}] ${f.attribute}: ${f.number_decimal ?? f.value_text ?? "null"} ${f.unit ?? ""}`), "", "## Outside evidence — original origins preserved");
   L.push("## Facts", "");
   for (const f of run.facts) {
     const r = reviews[f.fact_id];
