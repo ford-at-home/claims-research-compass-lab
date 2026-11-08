@@ -6,6 +6,8 @@ The revised source contains 51 specification acceptance cases. That count is not
 
 ## Current revision reconciliation
 
+The focused capability upgrade supersedes earlier live protocol claims below: see `CAPABILITY_UPGRADE.md`. The saved gateway exposes Tasks/Search/Responses, not Task Groups/Place Search/Decisions/Parallel MCP. Enterprise HTTP MCP remains real; external Responses is explicitly HTTP, never relabeled MCP. No canonical bytes were changed.
+
 ### Explicit Live demo baseline source
 
 Live source selection is now explicit: `demo` invokes the mock primary adapter without Parallel; `connected` retains the unconfigured actual-adapter error. Fixture remains the default. No failed integration automatically loads a mock or public substitute. Demo baseline records remain Live-mode setup records with simulated facts, null capture time, source selection, owner ID and input hash; only completed genuine external runs are replayable.

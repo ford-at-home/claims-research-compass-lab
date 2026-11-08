@@ -41,3 +41,5 @@ use the editor.
 - Canonical prompts and fixture amounts feed host adapters without editing source bytes; rental structured Task output requires validated benchmark purpose and comparison terms, because generic findings cannot express quote comparability safely.
 - Rental comparison presentation is isolated from dispatch and uses runtime-only additional fixture rows, so canonical source integrity and zero-call primary behavior remain unchanged.
 - Live demo baselines are explicit owned setup records with source/hash gates and simulated origins; mock enterprise uses authenticated HTTP MCP, so generic outside demos need no insurer credential and cannot become an outage fallback.
+- Use explicit gateway-compatible per-item Tasks and Responses when Groups/Places/Decisions/Parallel MCP are unavailable; never send a gateway connection key directly to Parallel, and label protocol adaptations truthfully.
+- Persist selected child submission state before each POST and real IDs immediately afterward; follow-ups verify the owned parent baseline/source/hash/public context to prevent duplicate spending and cross-user state access.

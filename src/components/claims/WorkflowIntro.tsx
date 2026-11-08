@@ -1,5 +1,6 @@
 import { ArrowRight, Car, CircleDollarSign, ClipboardList, FileCheck2, MapPin, CalendarDays, Search, ShieldCheck, Network, LockKeyhole, BookOpen, CloudRain, Wrench, type LucideIcon } from "lucide-react";
 import type { CaseId } from "@/lib/claims/types";
+import { CAPABILITIES } from '@/lib/claims/capability-upgrade';
 
 type Stage = { label: string; detail: string; icon: LucideIcon };
 const DESCRIPTIONS: Record<CaseId, string> = {
@@ -24,6 +25,7 @@ export function WorkflowIntro({ caseId }: { caseId: CaseId }) {
         <div>
           <p className="mb-1 font-mono text-xs uppercase text-primary">Baseline first · candidate experiment</p>
           <p className="max-w-3xl text-sm leading-relaxed text-foreground">{workflow.description}</p>
+          <p className="mt-2 text-xs text-primary">{CAPABILITIES[caseId]}</p>
         </div>
         {workflow.dependency && <div className="border-l-2 border-border pl-4">
           <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Main dependency</p>

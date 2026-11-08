@@ -27,11 +27,12 @@ import { BASELINE_INFO, researchGate, incrementalMetrics, type ResearchIntent } 
 import { runBaselineFixture, runIncrementalFixture } from "@/lib/claims/baseline-run";
 import { runBenchmarkFixture } from "@/lib/claims/benchmark-fixture";
 import { RentalComparison } from "./RentalComparison";
+import { CAPABILITIES, EXAMPLES, ITEMS, selectedItems, monitorPreview, lateRecordDiff } from '@/lib/claims/capability-upgrade';
 
 const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
 export function CaseScreen({ caseId }: { caseId: CaseId }) {
-  const meta = CASES.find((c) => c.id === caseId)!;
+  const meta = CASES.find((c) => c.id === caseId) ?? CASES[0];
   const { user, ready } = useAuth();
   const [text, setText] = useState(() => pretty(FIXTURE_INPUTS[caseId]));
   const [mode, setMode] = useState<Mode>("fixture");
@@ -47,7 +48,9 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
   const [currentHash, setCurrentHash] = useState("");
   const [localDeadlineHit, setLocalDeadlineHit] = useState(false);
   const cancelPoll = useRef(false);
-  const [exceptionQuestion, setExceptionQuestion] = useState("");
+  const [exceptionQuestion, setExceptionQuestion] = useState(EXAMPLES[caseId]);
+  const [selectedIds, setSelectedIds] = useState<string[]>(caseId === 'UC01' || caseId === 'UC02' ? ITEMS[caseId].map(x => x.id) : []);
+  const [followup, setFollowup] = useState(false);
   const [exceptionMessage, setExceptionMessage] = useState<string | null>(null);
   const [baseline, setBaseline] = useState<RunRecord | null>(null);
   const [requestedBenchmark, setRequestedBenchmark] = useState(false);
@@ -254,9 +257,12 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
           )}
           <div className="space-y-2 border-t pt-3">
             <h2 className="text-sm font-semibold">{isRental ? "Benchmark competitor rates" : "Incremental outside research"} <Chip>Optional</Chip></h2>
+            <p className="text-xs font-medium text-primary">{CAPABILITIES[caseId]}</p>
+            {(caseId === 'UC01' || caseId === 'UC02') && <fieldset className="space-y-2 text-xs"><legend className="font-semibold">Selected unresolved items · maximum 2</legend>{caseId === 'UC02' && <p>Routine line · existing estimating data · resolved · zero outside calls</p>}{ITEMS[caseId].map(item => <label key={item.id} className="flex items-start gap-2"><input type="checkbox" checked={selectedIds.includes(item.id)} disabled={busy} onChange={e => { setSelectedIds(e.target.checked ? [...selectedIds, item.id] : selectedIds.filter(x => x !== item.id)); setRun(null); setFollowup(false); }} /><span><strong>{item.id}</strong> · {item.question}</span></label>)}</fieldset>}
             <p className="text-xs text-muted-foreground">{BASELINE_INFO[caseId].question}. Candidate experiment, not a verified deficiency. If existing evidence answers the question, stop.</p>
             <Textarea aria-label="Incremental research question" value={exceptionQuestion} onChange={(e) => { setExceptionQuestion(e.target.value); setExceptionMessage(null); }} placeholder="Specific extra question" className="min-h-20 text-xs" />
             {!isRental && <label className="flex items-center gap-2 text-xs"><Switch checked={requestedBenchmark} onCheckedChange={setRequestedBenchmark} /> Requested independent benchmark</label>}
+            {['UC03', 'UC04', 'UC05'].includes(caseId) && mode === 'live' && run?.status === 'completed' && run.provider_ids['response_id'] && <label className="flex items-center gap-2 text-xs"><Switch checked={followup} onCheckedChange={setFollowup} /> Public follow-up to this captured response</label>}
             <Button variant="outline" size="sm" disabled={!exceptionQuestion.trim() || busy || !baseline || baseline.input_hash !== currentHash || mode === "replay" || (mode === "live" && !user)} onClick={async () => {
               if (!baseline || !parsed.ok) return;
               const intent: ResearchIntent = { action: isRental ? "benchmark_competitor_rates" : "research_incremental_question", question: exceptionQuestion, reason: isRental || requestedBenchmark ? "requested_benchmark" : "uncovered_question" };
@@ -265,7 +271,10 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
               setBusy(true);
               try {
                 const updatedInput = caseId === "UC05" ? { ...parsed.value, input: { ...parsed.value.input, question: exceptionQuestion } } : parsed.value;
-                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineSource, baselineId: baseline.provider_ids["db_run_id"], intent } }) : await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent } });
+                const parentDbId = followup ? run?.provider_ids['db_run_id'] : undefined;
+                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineSource, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId } }) : await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent, parentDbId, selectedItemIds: caseId === 'UC01' || caseId === 'UC02' ? selectedIds : undefined } });
+                r.result['capability'] = CAPABILITIES[caseId];
+                if (mode === 'fixture' && (caseId === 'UC01' || caseId === 'UC02')) r.result['selected_items'] = selectedItems(caseId, selectedIds).map(x => ({ ...x, status: 'SIMULATED complete', run_id: null, output: { basis: [], notes: 'Fabricated walkthrough, not a provider capture' } }));
                 r.result = { ...r.result, scope_version: "baseline-first-v2", research_intent: intent, baseline_snapshot: baseline, incremental_metrics: incrementalMetrics(baseline, r) };
                 setRun(r);
                 if (mode === "fixture") { saveFixtureRun(r); setHistory(loadFixtureRuns(caseId).filter((x) => x.result["scope_version"] === "baseline-first-v2")); }
@@ -431,9 +440,14 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
 
       {run.result["research_intent"] && <section className="border-y py-3 text-sm" aria-label="Incremental evidence">
         <h2 className="font-semibold">Added evidence against the baseline</h2>
+        <p className="text-xs text-primary">{run.result['capability'] ?? CAPABILITIES[run.case_id]}</p>
         <p className="mt-1">Supported additions: {run.result["incremental_metrics"]?.additional_supported_findings ?? 0} · Redundant findings: {run.result["incremental_metrics"]?.redundant_findings ?? 0}</p>
         <p className="text-xs text-muted-foreground">Non-redundant coverage: {run.result["incremental_metrics"]?.non_redundant_coverage?.length ?? 0} sources · Reviewer effort not measured{run.mode === "fixture" ? " · SIMULATED" : ""}</p>
       </section>}
+      {run.result['selected_items'] && <section className="space-y-2 border-y py-3" aria-label="Per-item Research Basis"><h2 className="text-sm font-semibold">Selected items & Research Basis</h2>{run.result['selected_items'].map((item: any) => <details key={item.id} className="text-xs"><summary className="cursor-pointer">{item.id} · {item.status} · {item.run_id ?? 'No live ID'}</summary><Mono>{pretty(item)}</Mono></details>)}</section>}
+      {run.result['branch_discovery'] && <details className="text-xs"><summary className="cursor-pointer font-semibold">Discovered branch sources · not rental quotes</summary><Mono>{pretty(run.result['branch_discovery'])}</Mono></details>}
+      {run.result['responses'] && <section className="space-y-2 border-y py-3 text-sm"><h2 className="font-semibold">Interactive public research</h2><p className="whitespace-pre-wrap break-words">{run.summary}</p><p className="text-xs text-muted-foreground">URL annotations are not source excerpts proving prices or applicability. Public facts do not establish internal root cause.</p><details className="text-xs"><summary>Annotations, refusal & research trail</summary><Mono>{pretty(run.result['responses'])}</Mono></details></section>}
+      {run.case_id === 'UC04' && <section className="space-y-2 border-y py-3 text-sm"><h2 className="font-semibold">Loss evidence follow-through</h2><p className="text-xs">Documented / conflicting / unknown evidence scope only. No claims probability or coverage decision. Decisions endpoint unavailable on this connection.</p><details><summary className="cursor-pointer text-xs">SIMULATED later report / correction diff</summary><Mono>{pretty(lateRecordDiff)}</Mono></details><details><summary className="cursor-pointer text-xs">Monitor request preview · never sent</summary><Mono>{pretty(monitorPreview(run.result['research_intent']?.question ?? EXAMPLES.UC04))}</Mono>{run.status === 'completed' && run.mode !== 'fixture' && run.provider_ids['task_run_id'] ? <Mono>{pretty(monitorPreview('', run.provider_ids['task_run_id']))}</Mono> : <p className="text-xs text-muted-foreground">Snapshot preview requires an actual completed Task ID; no fabricated ID is used.</p>}</details></section>}
       {run.result["competitor_comparisons"] && <RentalComparison run={run} onFact={onFact} />}
       {run.result["baseline_snapshot"] && run.result["simulated_primary"] && <section className="grid gap-3 border-y py-3 sm:grid-cols-2" aria-label="Separated primary and external evidence">
         <div><h3 className="text-sm font-semibold"><Chip tone="sim">SIMULATED PRIMARY</Chip> Existing-system demo</h3>{(run.result["baseline_snapshot"] as RunRecord).facts.map((f) => <p key={f.fact_id} className="mt-2 text-xs">{f.attribute}: {f.number_decimal ?? f.value_text ?? "unknown"} {f.unit ?? ""} · {f.origin} · SIMULATED</p>)}</div>
