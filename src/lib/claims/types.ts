@@ -37,8 +37,8 @@ export interface TraceEntry {
   op: string;
   transport: "none" | "http" | "mcp-http" | "simulated";
   status: "ok" | "error" | "skipped" | "simulated";
-  request?: unknown;
-  response?: unknown;
+  request?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  response?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   note?: string;
 }
 
@@ -59,13 +59,13 @@ export interface RunRecord {
   mode: Mode;
   label: string;
   status: "completed" | "running" | "error" | "submission_unknown" | "blocked";
-  input: unknown;
+  input: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   input_hash: string;
   created_at: string;
   captured_at: string | null;
   steps: Step[];
   facts: EvidenceFact[];
-  result: Record<string, unknown>;
+  result: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   gaps: string[];
   coverage: CoverageEntry[];
   trace: TraceEntry[];
