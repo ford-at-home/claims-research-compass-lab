@@ -14,7 +14,7 @@ import { EXTRACT_TEMPLATE, LIMITS, PARALLEL_MCP, TASK_TEMPLATES, SEARCH_TEMPLATE
 import type { CaseId, RunRecord, TraceEntry } from "./types";
 import { runRentalLive } from "./rental.server";
 import { rentalExceptionEligibility } from "./rental";
-import { readLiveBaseline } from "./baseline.server";
+import { readLiveBaseline, readDemoEnterpriseMcp } from "./baseline.server";
 import { researchGate, researchIntentSchema, incrementalMetrics } from "./baseline";
 import { incrementalPrompt } from "./incremental";
 import { benchmarkPrompt, competitorBenchmarkContext, competitorTaskJsonSchema, competitorTaskOutputSchema, compareCompetitorQuotes } from "./rental-benchmark";
@@ -64,7 +64,11 @@ function failRun(rec: RunRecord, e: unknown) {
   rec.error = R(pe ? `[${pe.kind}${pe.httpStatus ? " " + pe.httpStatus : ""}] ${pe.message}` : (e as Error).message);
 }
 
-const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional() });
+const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional() });
+function baselineMatches(baseline: RunRecord | undefined, caseId: CaseId, hash: string, source: string, owner: string) {
+  return !!baseline && baseline.mode === "live" && baseline.case_id === caseId && baseline.input_hash === hash && baseline.result["scope_version"] === "baseline-first-v2" && !baseline.result["research_intent"] && baseline.result["baseline_source"] === source && baseline.result["owner_id"] === owner;
+}
+const demoWarning = "SIMULATED primary values with live outside observations. Deltas are demonstration arithmetic, not real supplier savings or a real insurer quote.";
 
 /** Every primary path is adapter-only; external paths require an explicit gated question. */
 export const startLiveRun = createServerFn({ method: "POST" })
@@ -74,19 +78,23 @@ export const startLiveRun = createServerFn({ method: "POST" })
     const caseId = data.caseId as CaseId;
     const now = nowIso();
     const hash = await inputHash(data.input);
+    if (!context.userId) throw new Error("Unauthorized");
+    const source = data.baselineSource ?? "connected";
     if (!data.intent) {
-      const baseline = readLiveBaseline(caseId, data.input, hash, now);
+      const request = getRequest();
+      const baseline = await readLiveBaseline(caseId, data.input, hash, now, source, { origin: new URL(request.url).origin, authorization: request.headers.get("authorization") ?? "" });
+      baseline.result["owner_id"] = context.userId;
       baseline.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, baseline);
       return baseline;
     }
-    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").single();
+    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").eq("user_id", context.userId).single();
     const baseline = row?.result as unknown as RunRecord | undefined;
     const rec = emptyRun(caseId, "live", data.input, hash, now);
-    if (!baseline || baseline.case_id !== caseId || baseline.input_hash !== hash || baseline.result["scope_version"] !== "baseline-first-v2" || baseline.result["research_intent"]) { rec.status = "blocked"; rec.error = "Run the current existing-system baseline first."; return rec; }
+    if (!baselineMatches(baseline, caseId, hash, source, context.userId) || !baseline) { rec.status = "blocked"; rec.error = "Load your own matching baseline with the selected source first."; return rec; }
     const gate = researchGate(caseId, baseline, data.intent);
     if (!gate.allowed) { rec.status = "blocked"; rec.error = gate.reason; return rec; }
     if (caseId === "UC05") { rec.status = "blocked"; rec.error = "Use the dedicated question-gated MCP action."; return rec; }
-    rec.result = { scope_version: "baseline-first-v2", research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, baseline_coverage: baseline.result["baseline_coverage"] ?? [] };
+    rec.result = { scope_version: "baseline-first-v2", baseline_source: source, owner_id: context.userId, simulated_primary: source === "demo", demonstration_notice: source === "demo" ? demoWarning : null, research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, baseline_coverage: baseline.result["baseline_coverage"] ?? [] };
     rec.status = "running";
     rec.steps = ["Validate & public context", "Search", "Extract", "Task create", "Poll result", "Normalize & calculate"].map((name) => ({ name, status: "pending" as const }));
     const step = (i: number, s: "done" | "error" | "skipped") => { const item = rec.steps[i]; if (item) item.status = s; };
@@ -172,9 +180,11 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ dbId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase.from("research_runs").select("*").eq("id", data.dbId).single();
+    if (!context.userId) throw new Error("Unauthorized");
+    const { data: row, error } = await context.supabase.from("research_runs").select("*").eq("id", data.dbId).eq("user_id", context.userId).single();
     if (error || !row) throw new Error("Run not found");
     const rec = row.result as unknown as RunRecord;
+    if (rec.result?.["owner_id"] && rec.result["owner_id"] !== context.userId) throw new Error("Run not found");
     if (!rec.result?.["research_intent"]) return rec; // Primary/legacy runs never poll Parallel.
     const runId = rec.provider_ids["task_run_id"];
     if (!runId || rec.status !== "running") return rec;
@@ -197,6 +207,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
         }
         const d = rec.case_id === "UC03" ? { extra: [], result: {}, gaps: rec.facts.length ? [] : ["No supported retrievable competitor quotes. Prices remain unknown."] } : deriveLiveResult(rec.case_id, rec.facts, rec.input, (rec.result as any).outbound_context, captured);
         rec.facts.push(...d.extra);
+        if (rec.result["baseline_source"] === "demo") rec.facts.push(...((rec.result["baseline_snapshot"] as RunRecord)?.facts ?? []).map((f) => ({ ...f, fact_id: `primary-${f.fact_id}` })));
         rec.result = { ...rec.result, ...d.result, provider_output: { content: res?.output?.content ?? null, basis: res?.output?.basis ?? null }, usage: res?.run?.usage ?? res?.usage ?? null };
         rec.gaps = [...(res?.output?.content?.gaps ?? []), ...d.gaps];
         rec.summary = res?.output?.content?.summary ?? null;
@@ -240,37 +251,39 @@ export const requestRentalException = createServerFn({ method: "POST" })
 /** UC05 live: two actual MCP connections. Never fabricates a live trace. */
 export const runWarRoomLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ input: z.any(), baselineId: z.string().optional(), intent: researchIntentSchema.optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ input: z.any(), baselineSource: z.enum(["demo", "connected"]).optional(), baselineId: z.string().optional(), intent: researchIntentSchema.optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const now = nowIso();
     const rec = emptyRun("UC05", "live", data.input, await inputHash(data.input), now);
-    if (!data.intent) return readLiveBaseline("UC05", data.input, rec.input_hash, now);
-    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").single();
+    if (!context.userId) throw new Error("Unauthorized");
+    const source = data.baselineSource ?? "connected";
+    const request = getRequest();
+    if (!data.intent) {
+      const primary = await readLiveBaseline("UC05", data.input, rec.input_hash, now, source, { origin: new URL(request.url).origin, authorization: request.headers.get("authorization") ?? "" });
+      primary.result["owner_id"] = context.userId;
+      primary.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, primary);
+      return primary;
+    }
+    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").eq("user_id", context.userId).single();
     const baseline = row?.result as unknown as RunRecord | undefined;
-    if (!baseline || baseline.case_id !== "UC05" || baseline.input_hash !== rec.input_hash || baseline.result["scope_version"] !== "baseline-first-v2" || baseline.result["research_intent"]) { rec.status = "blocked"; rec.error = "Run the current enterprise baseline first."; return rec; }
+    if (!baselineMatches(baseline, "UC05", rec.input_hash, source, context.userId) || !baseline) { rec.status = "blocked"; rec.error = "Load your own matching enterprise baseline with the selected source first."; return rec; }
     const gate = researchGate("UC05", baseline, data.intent);
     if (!gate.allowed) { rec.status = "blocked"; rec.error = gate.reason; return rec; }
+    try { getKey(); } catch (e) { failRun(rec, e); return rec; }
     rec.steps = ["Connect mock-enterprise MCP", "Public context filter", "Connect Parallel MCP", "web_search", "web_fetch", "web_research", "Join & brief"].map((name) => ({ name, status: "pending" as const }));
     const conn: Record<string, string> = { "mock-enterprise": "not connected", parallel: "not connected" };
     const tr = (t: Omit<TraceEntry, "at">) => rec.trace.push(R({ at: nowIso(), ...t }));
-    const result: any = { scope_version: "baseline-first-v2", research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, mcp_connections: conn, internal_context_origin: "mock_enterprise", delay_causation: "not_established", sources_origin: "live_web" };
+    const result: any = { scope_version: "baseline-first-v2", owner_id: context.userId, baseline_source: source, simulated_primary: source === "demo", demonstration_notice: source === "demo" ? demoWarning : null, research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, mcp_connections: conn, internal_context_origin: "mock_enterprise", delay_causation: "not_established", sources_origin: "live_web" };
     rec.result = result;
     const callCap = () => { if (rec.calls.mcp >= LIMITS.maxMcpToolCalls) throw new Error("MCP tool call cap reached"); rec.calls.mcp++; };
     let internal: any = null;
     // 1. Mock enterprise over HTTP MCP
     try {
-      const token = process.env["MOCK_ENTERPRISE_MCP_TOKEN"];
-      if (!token) throw new Error("MOCK_ENTERPRISE_MCP_TOKEN missing");
-      const origin = new URL(getRequest().url).origin;
-      const me = new McpHttpClient(`${origin}/api/mock-enterprise-mcp`, { "x-mock-enterprise-token": token });
-      const init = await me.initialize();
-      const tools = await me.listTools();
-      tr({ op: "mock-enterprise initialize + tools/list", transport: "mcp-http", status: "ok", response: { server: init?.serverInfo, tools: (tools?.tools ?? []).map((t: any) => t.name) } });
+      const mcp = await readDemoEnterpriseMcp(new URL(request.url).origin, request.headers.get("authorization") ?? "");
+      tr({ op: "mock-enterprise initialize + tools/list", transport: "mcp-http", status: "ok", response: { server: mcp.init?.serverInfo, tools: mcp.names } });
       callCap();
-      const ctxRes = await me.callTool("get_case_context", { case_id: "UC05" });
       callCap();
-      const rules = await me.callTool("get_demo_rules", { case_id: "UC05" });
-      internal = { context: ctxRes?.structuredContent ?? JSON.parse(toolText(ctxRes) || "{}"), rules: rules?.structuredContent ?? null };
+      internal = { context: mcp.context, rules: mcp.rules };
       tr({ op: "mock-enterprise.tools/call get_case_context, get_demo_rules", transport: "mcp-http", status: "ok", response: { retained_in_host: true, internal_context: "[kept local — not shown in outbound trace]" } });
       conn["mock-enterprise"] = "connected (HTTP MCP adaptation of stdio design)";
       rec.steps[0]!.status = "done";
@@ -346,7 +359,7 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
     // Canary audit across every serialized outbound trace request
     result.private_canary_outbound = rec.trace.some((t) => t.transport === "mcp-http" && t.op.startsWith("parallel") && containsCanary(t.request));
     rec.facts = sources.map((s, i) => fact({ fact_id: `src-${i}`, entity_id: "public_question", attribute: "public_source", origin: "live_web", evidence_type: "other", value_text: s.url, status: "candidate", citations: [{ source_ref: s.url, url: s.url, excerpt: s.excerpt }], qualifiers: [`via ${s.via}`] }, nowIso()));
-    if (internal) rec.facts.push(fact({ fact_id: "m-internal-delay", entity_id: "internal", attribute: "reported_delay_days", origin: "mock_enterprise", evidence_type: "other", number_decimal: String(result.internal_context?.reported_delay_days ?? "") || null, unit: "days", citations: [{ source_ref: "mcp://mock-enterprise/get_case_context", url: null, excerpt: "Mock enterprise context (kept local)" }] }, nowIso()));
+    if (internal) rec.facts.push(fact({ fact_id: "m-internal-delay", entity_id: "internal", attribute: "reported_delay_days", origin: "mock_enterprise", status: "simulated", evidence_type: "other", qualifiers: ["SIMULATED enterprise record; actual MCP protocol"], number_decimal: String(result.internal_context?.reported_delay_days ?? "") || null, unit: "days", citations: [{ source_ref: "mcp://mock-enterprise/get_case_context", url: null, excerpt: "SIMULATED mock enterprise context (kept local)" }] }, nowIso()));
     result.brief = {
       cited_narrative: narrative,
       supported_facts: sources.filter((s) => s.via !== "web_research").map((s, i) => ({ text: `Public source: ${s.url}`, fact_ids: [`src-${i}`] })),
