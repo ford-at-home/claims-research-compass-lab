@@ -1,6 +1,7 @@
-// Loads the imported, unchanged specification package as actual JSON values.
+// Loads the exact authorized canonical revision; host-specific adapters stay outside it.
 import uc01 from "../../../specifications/parallel-claims/fixtures/UC01_salvage_valuation.input.json";
 import uc02 from "../../../specifications/parallel-claims/fixtures/UC02_damage_estimates.input.json";
+import uc03 from "../../../specifications/parallel-claims/fixtures/UC03_rental_extensions.input.json";
 import { RENTAL_SAMPLE } from "./rental";
 import uc04 from "../../../specifications/parallel-claims/fixtures/UC04_loss_verification.input.json";
 import uc05 from "../../../specifications/parallel-claims/fixtures/UC05_war_room_research.input.json";
@@ -23,9 +24,11 @@ import extractTemplate from "../../../specifications/parallel-claims/requests/ex
 import taskOutputSchema from "../../../specifications/parallel-claims/schemas/parallel_task_output.schema.json";
 import type { CaseId } from "./types";
 import { baselineSample } from "./baseline";
+import revision from "../../../specifications/parallel-claims/contracts/scope_revision.json";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const FIXTURE_INPUTS: Record<CaseId, any> = Object.fromEntries(Object.entries({ UC01: uc01, UC02: uc02, UC03: RENTAL_SAMPLE, UC04: uc04, UC05: uc05 }).map(([id, input]) => [id, { ...input, baseline: baselineSample(id as CaseId) }])) as Record<CaseId, any>;
+export const SPEC_REVISION = revision.revision;
+export const FIXTURE_INPUTS: Record<CaseId, any> = Object.fromEntries(Object.entries({ UC01: uc01, UC02: uc02, UC03: { ...uc03, input: { ...uc03.input, ...RENTAL_SAMPLE.input } }, UC04: uc04, UC05: uc05 }).map(([id, input]) => [id, { ...input, baseline: baselineSample(id as CaseId) }])) as Record<CaseId, any>;
 export const STORYBOARDS: any = storyboards;
 export const ACCEPTANCE: any[] = acceptance as any[];
 export const MOCK_ENTERPRISE: any = mockEnterprise;
