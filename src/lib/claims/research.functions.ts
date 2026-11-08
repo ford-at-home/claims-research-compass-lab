@@ -212,7 +212,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
     } catch (e) {
       // Leave status running so the user can Resume; record the error visibly.
       rec.trace.push(R({ at: nowIso(), op: "poll", transport: "http" as const, status: "error" as const, note: (e as Error).message }));
-      if (e instanceof ParallelError && ["auth", "credit_or_access", "config"].includes(e.kind)) failRun(rec, e);
+      if (e instanceof ParallelError && ["auth", "credit_or_access", "config", "schema"].includes(e.kind)) failRun(rec, e);
     }
     await saveRun(context.supabase, context.userId, rec, data.dbId);
     return rec;

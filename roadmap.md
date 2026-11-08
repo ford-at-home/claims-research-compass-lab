@@ -10,5 +10,6 @@
 - [x] Update all five descriptions, project scope and question-led research prompts.
 - [x] Run baseline, outage, benchmark and provenance checks; verify all five pages.
 - [x] Import source revision batch 1 exactly and verify all 30 supplied file hashes.
-- [ ] Import batch 2 and verify the complete 48-file manifest (awaiting user batch 2).
-- [ ] After batch 2, remove stale rental spec path, reconcile runtime contracts/prompts/fixtures, update warning eligibility and run full relevant checks.
+- [x] Import batch 2 and verify the complete manifest: 48/48 exact hashes, no extra canonical files.
+- [x] Remove stale rental spec path; reconcile runtime prompts, canonical fixture values, benchmark purpose and same-group exclusions.
+- [x] Verify current revision warning eligibility, retain failed original archive history, run 54 tests and inspect all five fixture flows and mobile layout.
