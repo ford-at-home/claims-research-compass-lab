@@ -72,7 +72,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
     const now = nowIso();
     if (caseId === "UC03") {
       const rental = runRentalLive(data.input, await inputHash(data.input), now);
-      rental.provider_ids.db_run_id = await saveRun(context.supabase, context.userId, rental);
+      rental.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, rental);
       return rental;
     }
     const rec = emptyRun(caseId, "live", data.input, await inputHash(data.input), now);

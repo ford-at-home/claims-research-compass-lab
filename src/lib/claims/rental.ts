@@ -71,18 +71,18 @@ export function runRentalBaseline(wrapper: unknown, inputHash: string, mode: Mod
   const input = parsed.data.input;
   try {
     const window = resolveRentalWindow(new Date(now), input.location.timezone, input.pickup_offset_days, input.requested_days);
-    run.result.resolved_window = window;
+    run.result["resolved_window"] = window;
     const request: SupplierRequest = { branch_reference: input.branch_reference, ...window, requested_days: input.requested_days, vehicle_class: input.vehicle_class };
     run.steps.push({ name: "Validate scenario", status: "done" });
     const response = adapter.getPricing(request);
-    run.result.adapter_state = response.status === "ok" ? response.origin === "simulated_fixture" ? "simulated" : "configured" : response.status;
+    run.result["adapter_state"] = response.status === "ok" ? response.origin === "simulated_fixture" ? "simulated" : "configured" : response.status;
     run.trace.push({ at: now, op: "supplier_adapter.getPricing", transport: response.status === "ok" && response.origin === "simulated_fixture" ? "simulated" : "none", status: response.status === "ok" ? response.origin === "simulated_fixture" ? "simulated" : "ok" : "error", request, response });
     run.steps.push({ name: "Supplier pricing", status: response.status === "ok" ? "done" : "error" });
     if (response.status !== "ok") { run.error = `Supplier integration ${response.status}: ${response.error}`; return run; }
     // Never accept injected simulated supplier evidence in a Live run.
     if (mode !== "fixture" && response.origin === "simulated_fixture") { run.error = "Supplier integration error: simulated pricing cannot be used in Live or Replay."; return run; }
     const rate = dec(response.daily_all_in_usd);
-    if (!rate || rate.isNegative()) { run.error = "Supplier integration incomplete: valid all-in pricing is missing. No web-price fallback."; run.result.adapter_state = "incomplete"; return run; }
+    if (!rate || rate.isNegative()) { run.error = "Supplier integration incomplete: valid all-in pricing is missing. No web-price fallback."; run.result["adapter_state"] = "incomplete"; return run; }
     const daily = rate.toFixed(2);
     const total = times(daily, input.requested_days);
     const isSim = response.origin === "simulated_fixture";
@@ -102,7 +102,7 @@ export function runRentalBaseline(wrapper: unknown, inputHash: string, mode: Mod
     run.summary = `${isSim ? "SIMULATED — " : ""}Supplier integration baseline: ${daily} USD/day × ${input.requested_days} days = ${total} USD. Reviewer evidence only; zero Parallel calls.`;
   } catch {
     run.error = "Supplier integration error: request failed or dates could not be resolved. No web-price fallback.";
-    run.result.adapter_state = "error";
+    run.result["adapter_state"] = "error";
   }
   return run;
 }

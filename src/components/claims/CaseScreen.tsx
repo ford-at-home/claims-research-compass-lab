@@ -61,7 +61,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
   }, [text]);
 
   useEffect(() => {
-    setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result.workflow === "supplier_integration_baseline"));
+    setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result["workflow"] === "supplier_integration_baseline"));
     setReviews(loadReviews());
     return () => {
       cancelPoll.current = true;
@@ -113,7 +113,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
         setProgress("Loading fabricated storyboard (no provider calls)…");
         const r = runFixture(caseId, parsed.value, await inputHash(parsed.value));
         saveFixtureRun(r);
-        setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result.workflow === "supplier_integration_baseline"));
+        setHistory(loadFixtureRuns(caseId).filter((r) => caseId !== "UC03" || r.result["workflow"] === "supplier_integration_baseline"));
         setRun(r);
       } else if (mode === "live") {
         if (!user) {
