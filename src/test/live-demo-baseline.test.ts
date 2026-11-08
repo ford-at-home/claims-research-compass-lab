@@ -58,7 +58,7 @@ describe("explicit Live demo baselines", () => {
     });
     it(`${id}: explicit outside action reaches mocked provider only after demo baseline`, async () => {
       const { rec } = await baseline(id); const db = store(rec);
-      const data = { caseId: id, input: FIXTURE_INPUTS[id], baselineSource: "demo", baselineId: "stored-id", intent: intent(id) };
+      const data = { caseId: id, input: FIXTURE_INPUTS[id], baselineSource: "demo", baselineId: "stored-id", intent: intent(id), selectedItemIds: id === "UC01" ? ["auction-status"] : id === "UC02" ? ["bumper-guidance"] : undefined };
       const output = await (id === "UC05" ? war : start)({ data, context: db.context });
       expect(output.result["demonstration_notice"]).toContain("not real supplier savings");
       expect(db.selection.eq).toHaveBeenCalledWith("user_id", "owner");

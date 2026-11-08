@@ -380,14 +380,14 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
     return rec;
   });
 
+async function ownedPreviousResponse(rec: RunRecord, context: any, parentDbId: string): Promise<string> {
+  const { data: row } = await context.supabase.from('research_runs').select('result').eq('id', parentDbId).eq('user_id', context.userId).single();
+  const parent = row?.result as RunRecord | undefined;
+  if (!parent || parent.status !== 'completed' || parent.case_id !== rec.case_id || parent.input_hash !== rec.input_hash || parent.result['owner_id'] !== context.userId || parent.result['baseline_id'] !== rec.result['baseline_id'] || parent.result['baseline_source'] !== rec.result['baseline_source'] || JSON.stringify(parent.result['outbound_context'] ?? parent.result['outbound_preview']) !== JSON.stringify(rec.result['outbound_context'] ?? rec.result['outbound_preview']) || !parent.provider_ids['response_id']) throw new Error('Follow-up requires your completed response with matching baseline, source and public context.');
+  return parent.provider_ids['response_id'];
+}
 async function completeResponse(rec: RunRecord, context: any, dbId: string, parentDbId: string | undefined, input: string, schema?: unknown) {
-  let previous: string | undefined;
-  if (parentDbId) {
-    const { data: row } = await context.supabase.from('research_runs').select('result').eq('id', parentDbId).eq('user_id', context.userId).single();
-    const parent = row?.result as RunRecord | undefined;
-    if (!parent || parent.status !== 'completed' || parent.case_id !== rec.case_id || parent.input_hash !== rec.input_hash || parent.result['owner_id'] !== context.userId || parent.result['baseline_id'] !== rec.result['baseline_id'] || parent.result['baseline_source'] !== rec.result['baseline_source'] || JSON.stringify(parent.result['outbound_context'] ?? parent.result['outbound_preview']) !== JSON.stringify(rec.result['outbound_context'] ?? rec.result['outbound_preview']) || !parent.provider_ids['response_id']) throw new Error('Follow-up requires your completed response with matching baseline, source and public context.');
-    previous = parent.provider_ids['response_id'];
-  }
+  const previous = parentDbId ? await ownedPreviousResponse(rec, context, parentDbId) : undefined;
   const body = { model: 'parallel', input, reasoning: { effort: 'low' }, ...(previous ? { previous_response_id: previous } : {}), ...(schema ? { text: { format: { type: 'json_schema', name: 'case_result', schema } } } : {}) };
   if (containsCanary(body)) throw new Error('Private context rejected.');
   rec.result['responses_calls'] = 1;
