@@ -9,6 +9,8 @@ import { Chip } from "@/components/claims/ui-bits";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Claims Research Lab — Generic Parallel Web Systems Claims Engineering Use Cases" },
       { name: "description", content: "Five evidence-first claims research demos with explicit Fixture, Live and Replay modes." },
       { property: "og:title", content: "Claims Research Lab" },

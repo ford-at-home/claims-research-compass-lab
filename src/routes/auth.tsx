@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Sign in — Claims Research Lab" },
       { name: "description", content: "Sign in to run and store live research in the Claims Research Lab." },
       { property: "og:title", content: "Sign in — Claims Research Lab" },
