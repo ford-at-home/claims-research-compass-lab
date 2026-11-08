@@ -29,7 +29,7 @@ function Index() {
         <div className="font-mono text-xs text-primary">About</div>
         <h1 className="text-2xl font-semibold md:text-3xl">{PROJECT_TITLE}</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          A generic engineering suite for evidence-first claims research. All claim inputs are hypothetical; no insurer data or branding.
+          Existing capabilities first; outside evidence only for precise extra questions. These are candidate experiments, not verified insurer deficiencies. All claim inputs are hypothetical; no insurer data or branding.
           Research is kept separate from settlement, coverage, approval, booking and messaging decisions.
         </p>
       </div>
@@ -47,7 +47,7 @@ function Index() {
           <h2 className="text-sm font-semibold">Modes</h2>
           <ul className="mt-2 space-y-2 text-sm">
             <li><Chip tone="sim">Fixture</Chip> Fabricated storyboard; zero provider calls.</li>
-            <li><Chip tone="live">Live</Chip> Real Parallel requests (signed-in users only); failures stay visible.</li>
+            <li><Chip tone="live">Live</Chip> Existing adapters first; separate optional research for signed-in users.</li>
             <li><Chip tone="replay">Replay</Chip> Only genuine previously captured live runs, with capture time.</li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">No mode switches automatically. {ACCEPTANCE.length} acceptance cases ship with the specification package.</p>

@@ -82,11 +82,11 @@ export const MODE_LABEL: Record<Mode, string> = {
 };
 
 export const CASES: { id: CaseId; slug: string; title: string; short: string; visible: string }[] = [
-  { id: "UC01", slug: "uc01", title: "Salvage valuation", short: "Salvage", visible: "Separate vehicle value and damaged recovery evidence" },
-  { id: "UC02", slug: "uc02", title: "Damage estimate verification", short: "Damage estimate", visible: "Line by line fitment and price findings" },
+  { id: "UC01", slug: "uc01", title: "Salvage valuation", short: "Salvage", visible: "Existing valuation/salvage baseline plus optional outside comparables" },
+  { id: "UC02", slug: "uc02", title: "Damage estimate verification", short: "Damage estimate", visible: "Existing estimate sources plus a defined outside exception" },
   { id: "UC03", slug: "uc03", title: "Rental supplier integration baseline", short: "Rental baseline", visible: "Supplier pricing, local rules and repair timing for reviewer evidence" },
-  { id: "UC04", slug: "uc04", title: "Loss verification", short: "Loss verification", visible: "Event timeline and geographic match evidence" },
-  { id: "UC05", slug: "uc05", title: "War room research with MCP", short: "War room (MCP)", visible: "Cited brief and trace across two MCP servers" },
+  { id: "UC04", slug: "uc04", title: "Loss verification", short: "Loss verification", visible: "Existing feeds plus precise missing corroboration" },
+  { id: "UC05", slug: "uc05", title: "War room research with MCP", short: "War room (MCP)", visible: "Enterprise baseline plus genuinely external MCP evidence" },
 ];
 
 export const PROJECT_TITLE = "Generic Parallel Web Systems Claims Engineering Use Cases";

@@ -22,9 +22,10 @@ import t5 from "../../../specifications/parallel-claims/requests/UC05_task.templ
 import extractTemplate from "../../../specifications/parallel-claims/requests/extract.template.json";
 import taskOutputSchema from "../../../specifications/parallel-claims/schemas/parallel_task_output.schema.json";
 import type { CaseId } from "./types";
+import { baselineSample } from "./baseline";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const FIXTURE_INPUTS: Record<CaseId, any> = { UC01: uc01, UC02: uc02, UC03: RENTAL_SAMPLE, UC04: uc04, UC05: uc05 };
+export const FIXTURE_INPUTS: Record<CaseId, any> = Object.fromEntries(Object.entries({ UC01: uc01, UC02: uc02, UC03: RENTAL_SAMPLE, UC04: uc04, UC05: uc05 }).map(([id, input]) => [id, { ...input, baseline: baselineSample(id as CaseId) }])) as Record<CaseId, any>;
 export const STORYBOARDS: any = storyboards;
 export const ACCEPTANCE: any[] = acceptance as any[];
 export const MOCK_ENTERPRISE: any = mockEnterprise;

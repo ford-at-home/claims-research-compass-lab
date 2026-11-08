@@ -1,7 +1,7 @@
 // Server-only Parallel HTTP client. The API key is read per call and never returned or logged.
 import { LIMITS } from "./spec";
 
-export const PARALLEL_BASE = "https://api.parallel.ai";
+export const PARALLEL_BASE = "https://connector-gateway.lovable.dev/parallel";
 
 export class ParallelError extends Error {
   constructor(
@@ -39,6 +39,8 @@ export async function parallelRequest<T = unknown>(
   opts: { idempotent: boolean; retries?: { count: number } },
 ): Promise<T> {
   const key = getKey();
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  if (!lovableKey) throw new ParallelError("config", null, "Parallel connection configuration is unavailable. No provider substitution.");
   const maxAttempts = opts.idempotent ? 1 + LIMITS.maxReadRetries : 1;
   let lastErr: ParallelError | null = null;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -47,7 +49,7 @@ export async function parallelRequest<T = unknown>(
     try {
       res = await fetch(`${PARALLEL_BASE}${path}`, {
         method,
-        headers: { "x-api-key": key, "content-type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": key, "content-type": "application/json" },
         body: method === "POST" ? JSON.stringify(body) : null,
         signal: AbortSignal.timeout(LIMITS.httpTimeoutMs),
       });

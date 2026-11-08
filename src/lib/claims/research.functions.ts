@@ -14,6 +14,10 @@ import { EXTRACT_TEMPLATE, LIMITS, PARALLEL_MCP, TASK_TEMPLATES, SEARCH_TEMPLATE
 import type { CaseId, RunRecord, TraceEntry } from "./types";
 import { runRentalLive } from "./rental.server";
 import { rentalExceptionEligibility } from "./rental";
+import { readLiveBaseline } from "./baseline.server";
+import { researchGate, researchIntentSchema, incrementalMetrics } from "./baseline";
+import { incrementalPrompt } from "./incremental";
+import { benchmarkPrompt, competitorBenchmarkContext, competitorQuoteSchema, compareCompetitorQuotes } from "./rental-benchmark";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const caseIdSchema = z.enum(["UC01", "UC02", "UC03", "UC04", "UC05"]);
@@ -60,7 +64,7 @@ function failRun(rec: RunRecord, e: unknown) {
   rec.error = R(pe ? `[${pe.kind}${pe.httpStatus ? " " + pe.httpStatus : ""}] ${pe.message}` : (e as Error).message);
 }
 
-const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), precisePoint: z.boolean().optional() });
+const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional() });
 
 /** UC03 is supplier-only; UC01, UC02, UC04 retain their research paths. */
 export const startLiveRun = createServerFn({ method: "POST" })
@@ -68,14 +72,21 @@ export const startLiveRun = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => liveInput.parse(d))
   .handler(async ({ data, context }) => {
     const caseId = data.caseId as CaseId;
-    if (caseId === "UC05") throw new Error("UC05 uses the MCP route");
     const now = nowIso();
-    if (caseId === "UC03") {
-      const rental = runRentalLive(data.input, await inputHash(data.input), now);
-      rental.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, rental);
-      return rental;
+    const hash = await inputHash(data.input);
+    if (!data.intent) {
+      const baseline = readLiveBaseline(caseId, data.input, hash, now);
+      baseline.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, baseline);
+      return baseline;
     }
-    const rec = emptyRun(caseId, "live", data.input, await inputHash(data.input), now);
+    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").single();
+    const baseline = row?.result as unknown as RunRecord | undefined;
+    const rec = emptyRun(caseId, "live", data.input, hash, now);
+    if (!baseline || baseline.case_id !== caseId || baseline.input_hash !== hash || baseline.result["scope_version"] !== "baseline-first-v2" || baseline.result["research_intent"]) { rec.status = "blocked"; rec.error = "Run the current existing-system baseline first."; return rec; }
+    const gate = researchGate(caseId, baseline, data.intent);
+    if (!gate.allowed) { rec.status = "blocked"; rec.error = gate.reason; return rec; }
+    if (caseId === "UC05") { rec.status = "blocked"; rec.error = "Use the dedicated question-gated MCP action."; return rec; }
+    rec.result = { scope_version: "baseline-first-v2", research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, baseline_coverage: baseline.result["baseline_coverage"] ?? [] };
     rec.status = "running";
     rec.steps = ["Validate & public context", "Search", "Extract", "Task create", "Poll result", "Normalize & calculate"].map((name) => ({ name, status: "pending" as const }));
     const step = (i: number, s: "done" | "error" | "skipped") => { rec.steps[i]!.status = s; };
@@ -87,7 +98,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
       step(0, "error");
       return rec; // not stored: no provider call was possible
     }
-    const pub = buildPublicContext(caseId, data.input, new Date(), { precisePoint: !!data.precisePoint });
+    const pub = caseId === "UC03" ? { ok: true as const, context: competitorBenchmarkContext(data.input, baseline, data.intent.question), dropped: ["supplier prices", "insurer rules", "repair details", "private baseline records"] } : buildPublicContext(caseId, data.input, new Date(), { precisePoint: !!data.precisePoint });
     if (!pub.ok) {
       rec.status = "blocked";
       rec.error = pub.reason;
@@ -104,7 +115,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
     try {
       // Search (1 of max 4)
       const tpl = SEARCH_TEMPLATES[caseId];
-      const searchBody = { ...tpl, search_queries: searchQueries(caseId, pub.context) };
+      const searchBody = { objective: incrementalPrompt(caseId, data.intent.question), mode: "fast", search_queries: [data.intent.question.slice(0, 180)], advanced_settings: { max_results: 5 } };
       rec.calls.search++;
       const sres: any = await parallelRequest("POST", "/v1/search", searchBody, { idempotent: true, retries });
       const sessionId: string | null = sres?.session_id ?? null;
@@ -117,8 +128,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
       // Extract (up to 8 URLs)
       const urls = results.map((r) => r.url).filter(Boolean).slice(0, Math.min(LIMITS.maxExtractUrls, 5));
       if (urls.length) {
-        const exBody = { ...EXTRACT_TEMPLATE, urls, objective: tpl.objective, search_queries: [], session_id: sessionId };
-        if (!sessionId) delete (exBody as any).session_id;
+        const exBody = { urls, objective: data.intent.question, advanced_settings: { excerpt_settings: { max_chars_per_result: 4000 } } };
         rec.calls.extract_urls += urls.length;
         try {
           const eres: any = await parallelRequest("POST", "/v1/extract", exBody, { idempotent: true, retries });
@@ -134,7 +144,13 @@ export const startLiveRun = createServerFn({ method: "POST" })
       } else step(2, "skipped");
       // Task create (max 1) — no automatic resubmission
       const t = structuredClone(TASK_TEMPLATES[caseId]);
-      t.processor = process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
+      t.processor = caseId === "UC03" ? "pro" : process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
+      t.input.research_instructions = caseId === "UC03" ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question);
+      if (caseId === "UC03") t.task_spec.output_schema = { type: "json", json_schema: {
+        type: "object", required: ["quotes"], additionalProperties: false, properties: { quotes: { type: "array", items: {
+          type: "object", additionalProperties: false, required: Object.keys(competitorQuoteSchema.shape), properties: Object.fromEntries(Object.entries(competitorQuoteSchema.shape).map(([key]) => [key, key === "supported_terms" ? { type: "array", items: { type: "string" } } : ["supplier_identity_verified", "all_required_fees_known"].includes(key) ? { type: "boolean" } : ["days", "seats"].includes(key) ? { type: ["number", "null"] } : { type: key === "supplier" ? "string" : ["string", "null"] }]))
+        } } }
+      } };
       t.input.public_case_context = pub.context;
       t.input.discovered_source_excerpts = excerpts.slice(0, 12).map((x) => ({ ...x, excerpts: (x.excerpts ?? []).slice(0, 3).map((s: string) => String(s).slice(0, 1500)) }));
       if (containsCanary(t)) throw new Error("Outbound request contained private canary; aborted");
@@ -161,22 +177,31 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase.from("research_runs").select("*").eq("id", data.dbId).single();
     if (error || !row) throw new Error("Run not found");
     const rec = row.result as unknown as RunRecord;
-    if (rec.case_id === "UC03") return rec; // Never poll historical rental Parallel tasks.
+    if (!rec.result?.["research_intent"]) return rec; // Primary/legacy runs never poll Parallel.
     const runId = rec.provider_ids["task_run_id"];
     if (!runId || rec.status !== "running") return rec;
     try {
       const st: any = await parallelRequest("GET", `/v1/tasks/runs/${encodeURIComponent(runId)}`, null, { idempotent: true });
       rec.trace.push(R({ at: nowIso(), op: `GET /v1/tasks/runs/${runId}`, transport: "http" as const, status: "ok" as const, response: { status: st?.status } , note: "status check (not a research operation)" }));
       if (st?.status === "completed") {
-        const res: any = await parallelRequest("GET", `/v1/tasks/runs/${encodeURIComponent(runId)}/result`, null, { idempotent: true });
+        const res: any = await parallelRequest("GET", `/v1/tasks/runs/${encodeURIComponent(runId)}/result?timeout=1`, null, { idempotent: true });
         const captured = nowIso();
         rec.facts = normalizeTaskOutput(res?.output, captured);
-        const d = deriveLiveResult(rec.case_id, rec.facts, rec.input, (rec.result as any).outbound_context, captured);
+        if (rec.case_id === "UC03") {
+          const raw = Array.isArray(res?.output?.content?.quotes) ? res.output.content.quotes : [];
+          const quotes = raw.flatMap((q: unknown) => { const parsed = competitorQuoteSchema.safeParse(q); return parsed.success ? [parsed.data] : []; });
+          const baseline = rec.result["baseline_snapshot"] as RunRecord;
+          const comparisons = compareCompetitorQuotes(baseline, quotes, captured);
+          rec.result["competitor_comparisons"] = comparisons;
+          rec.facts = comparisons.map((q: any, i: number) => fact({ fact_id: `competitor-${i}`, entity_id: q.supplier, attribute: "public_retail_rental_total", origin: "live_web", evidence_type: "posted_rate", status: q.comparable ? "supported" : "insufficient", number_decimal: q.total_usd, unit: "USD", currency: "USD", qualifiers: [...q.mismatches, q.rate_basis ?? "unknown rate basis", q.availability_basis ?? "unknown availability"], citations: q.url && q.excerpt ? [{ source_ref: q.url, url: q.url, excerpt: q.excerpt }] : [] }, captured));
+        }
+        const d = rec.case_id === "UC03" ? { extra: [], result: {}, gaps: rec.facts.length ? [] : ["No supported retrievable competitor quotes. Prices remain unknown."] } : deriveLiveResult(rec.case_id, rec.facts, rec.input, (rec.result as any).outbound_context, captured);
         rec.facts.push(...d.extra);
         rec.result = { ...rec.result, ...d.result, provider_output: { content: res?.output?.content ?? null, basis: res?.output?.basis ?? null }, usage: res?.run?.usage ?? res?.usage ?? null };
         rec.gaps = [...(res?.output?.content?.gaps ?? []), ...d.gaps];
         rec.summary = res?.output?.content?.summary ?? null;
         rec.status = "completed";
+        rec.result["incremental_metrics"] = incrementalMetrics(rec.result["baseline_snapshot"] as RunRecord, rec);
         rec.captured_at = captured;
         rec.steps.forEach((s, i) => { if (i >= 4) s.status = "done"; });
         rec.trace.push(R({ at: captured, op: `GET /v1/tasks/runs/${runId}/result`, transport: "http" as const, status: "ok" as const, response: { findings: rec.facts.length, basis_entries: (res?.output?.basis ?? []).length } }));
@@ -204,7 +229,7 @@ export const listStoredRuns = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(30);
     if (error) throw new Error(error.message);
-    return (rows ?? []).filter((r: any) => data.caseId !== "UC03" || r.result?.result?.workflow === "supplier_integration_baseline").map((r: any) => ({ ...(r.result as RunRecord), provider_ids: { ...(r.result?.provider_ids ?? {}), db_run_id: r.id } }));
+    return (rows ?? []).filter((r: any) => r.result?.result?.scope_version === "baseline-first-v2").map((r: any) => ({ ...(r.result as RunRecord), provider_ids: { ...(r.result?.provider_ids ?? {}), db_run_id: r.id } }));
   });
 
 export const requestRentalException = createServerFn({ method: "POST" })
@@ -215,14 +240,20 @@ export const requestRentalException = createServerFn({ method: "POST" })
 /** UC05 live: two actual MCP connections. Never fabricates a live trace. */
 export const runWarRoomLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ input: z.any() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ input: z.any(), baselineId: z.string().optional(), intent: researchIntentSchema.optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const now = nowIso();
     const rec = emptyRun("UC05", "live", data.input, await inputHash(data.input), now);
+    if (!data.intent) return readLiveBaseline("UC05", data.input, rec.input_hash, now);
+    const { data: row } = await context.supabase.from("research_runs").select("result").eq("id", data.baselineId ?? "").single();
+    const baseline = row?.result as unknown as RunRecord | undefined;
+    if (!baseline || baseline.case_id !== "UC05" || baseline.input_hash !== rec.input_hash || baseline.result["scope_version"] !== "baseline-first-v2" || baseline.result["research_intent"]) { rec.status = "blocked"; rec.error = "Run the current enterprise baseline first."; return rec; }
+    const gate = researchGate("UC05", baseline, data.intent);
+    if (!gate.allowed) { rec.status = "blocked"; rec.error = gate.reason; return rec; }
     rec.steps = ["Connect mock-enterprise MCP", "Public context filter", "Connect Parallel MCP", "web_search", "web_fetch", "web_research", "Join & brief"].map((name) => ({ name, status: "pending" as const }));
     const conn: Record<string, string> = { "mock-enterprise": "not connected", parallel: "not connected" };
     const tr = (t: Omit<TraceEntry, "at">) => rec.trace.push(R({ at: nowIso(), ...t }));
-    const result: any = { mcp_connections: conn, internal_context_origin: "mock_enterprise", delay_causation: "not_established", sources_origin: "live_web" };
+    const result: any = { scope_version: "baseline-first-v2", research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, mcp_connections: conn, internal_context_origin: "mock_enterprise", delay_causation: "not_established", sources_origin: "live_web" };
     rec.result = result;
     const callCap = () => { if (rec.calls.mcp >= LIMITS.maxMcpToolCalls) throw new Error("MCP tool call cap reached"); rec.calls.mcp++; };
     let internal: any = null;
@@ -246,6 +277,8 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
     } catch (e) {
       tr({ op: "mock-enterprise MCP", transport: "mcp-http", status: "error", note: (e as Error).message });
       rec.steps[0]!.status = "error";
+      rec.status = "error"; rec.error = "Enterprise MCP integration failed; no public research substitute.";
+      return rec;
     }
     result.internal_context = internal?.context?.case?.input?.internal_context ?? null;
     result.rules = internal?.rules?.rules ?? null;
@@ -253,6 +286,7 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
     const pub = buildPublicContext("UC05", data.input);
     if (!pub.ok) { rec.status = "blocked"; rec.error = pub.reason; return rec; }
     const outbound = pub.context as any;
+    outbound.question = data.intent.question;
     result.outbound_preview = outbound;
     result.private_canary_outbound = containsCanary(outbound);
     rec.steps[1]!.status = "done";
@@ -322,7 +356,8 @@ export const runWarRoomLive = createServerFn({ method: "POST" })
       next_actions: ["Review each source excerpt", "Request direct shop confirmation"],
     };
     rec.steps[6]!.status = "done";
-    rec.status = conn["parallel"] === "connected" && narrative ? "completed" : "error";
+    rec.status = conn["parallel"] === "connected" && narrative && rec.steps.slice(0, 6).every((s) => s.status === "done") ? "completed" : "error";
+    rec.result["incremental_metrics"] = incrementalMetrics(baseline, rec);
     rec.captured_at = rec.status === "completed" ? nowIso() : null;
     const dbId = await saveRun(context.supabase, context.userId, rec);
     rec.provider_ids["db_run_id"] = dbId;

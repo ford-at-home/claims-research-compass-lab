@@ -2,65 +2,27 @@ import { ArrowRight, Car, CircleDollarSign, ClipboardList, FileCheck2, MapPin, C
 import type { CaseId } from "@/lib/claims/types";
 
 type Stage = { label: string; detail: string; icon: LucideIcon };
-const WORKFLOWS: Record<CaseId, { description: string; dependency?: string; stages: Stage[] }> = {
-  UC01: {
-    description: "Produce separate evidence tables for pre-loss vehicle value and damaged salvage recovery. Distinguish asking prices, active bids, and completed sales.",
-    dependency: "Access to documented completed auction transactions.",
-    stages: [
-      { label: "Vehicle & damage", detail: "Identity, condition, location", icon: Car },
-      { label: "Market evidence", detail: "Pre-loss value · separate table", icon: Search },
-      { label: "Salvage evidence", detail: "Asks ≠ bids ≠ completed sales", icon: CircleDollarSign },
-      { label: "Cited comparison", detail: "Recovery, costs, evidence gaps", icon: FileCheck2 },
-    ],
-  },
-  UC02: {
-    description: "Check exact part fitment and pricing, comparable labor rates, and shop details. Return cited findings beside each estimate line.",
-    dependency: "Reliable part identifiers and usable local rate sources.",
-    stages: [
-      { label: "Estimate lines", detail: "Parts, labor, shop details", icon: ClipboardList },
-      { label: "Fitment & price", detail: "Exact identifiers and condition", icon: Wrench },
-      { label: "Local labor", detail: "Comparable rates and costs", icon: MapPin },
-      { label: "Line-by-line findings", detail: "Citations and unresolved items", icon: FileCheck2 },
-    ],
-  },
-  UC03: {
-    description: "Use pricing from the insurer’s existing rental supplier integration, combine it with local insurer rules and repair timing, and present evidence to the reviewer. Ordinary rental requests make zero Parallel calls.",
-    dependency: "The real supplier contract is not supplied here. Pricing is confirmed as a capability; availability, reservation and extension fields remain unverified.",
-    stages: [
-      { label: "Supplier integration", detail: "Authoritative pricing · simulated here", icon: Car },
-      { label: "Local insurer rules", detail: "Known limits only · no approval", icon: ShieldCheck },
-      { label: "Repair timing", detail: "Requested days and repair context", icon: CalendarDays },
-      { label: "Reviewer evidence", detail: "Unknowns stay visible · no reservation changes", icon: FileCheck2 },
-    ],
-  },
-  UC04: {
-    description: "Build an event timeline with official weather, closure, and incident evidence matched to the loss location and time.",
-    dependency: "Source coverage, publication delay, and location precision.",
-    stages: [
-      { label: "Loss time & place", detail: "Time window and location precision", icon: MapPin },
-      { label: "Official evidence", detail: "Weather, closures, incidents", icon: CloudRain },
-      { label: "Match & sequence", detail: "Observations ≠ warnings", icon: CalendarDays },
-      { label: "Event timeline", detail: "Citations, coverage, uncertainty", icon: FileCheck2 },
-    ],
-  },
-  UC05: {
-    description: "Connect Parallel alongside enterprise MCP tools and return briefs linking outside facts to internal research questions.",
-    stages: [
-      { label: "Internal question", detail: "Mock enterprise MCP context", icon: Network },
-      { label: "Privacy filter", detail: "Only allowlisted public fields", icon: LockKeyhole },
-      { label: "Outside research", detail: "Parallel MCP discovery and calls", icon: Search },
-      { label: "Cited brief", detail: "Facts, hypotheses, open questions", icon: BookOpen },
-    ],
-  },
+const DESCRIPTIONS: Record<CaseId, string> = {
+  UC01: "Existing valuation and salvage outputs remain primary. Test outside comparables only for a documented missing question or specifically requested market benchmark; keep asks, bids and completed sales distinct.",
+  UC02: "Existing estimating, parts, labor and repair sources remain primary. Investigate a defined unresolved exception or requested independent benchmark, not routine estimate approval or rate lookup.",
+  UC03: "Existing supplier integration provides authoritative pricing. Optionally benchmark different suppliers in the same area with matched dates, duration, class, seating, currency and fees. Keep public retail and contracted rate bases distinct; switching costs are separate.",
+  UC04: "Existing catastrophe, weather and incident feeds come first. Ask for only a precise missing corroboration question or public source outside that coverage, not routine loss verification.",
+  UC05: "Enterprise tools provide internal facts first. Research only a genuinely external evidence question and join it locally; public research does not reconstruct internal company data.",
 };
+const BASELINE_LABELS: Record<CaseId, string> = { UC01: "Valuation & salvage", UC02: "Estimating & repair", UC03: "Supplier pricing", UC04: "Weather & incidents", UC05: "Enterprise tools" };
 
 export function WorkflowIntro({ caseId }: { caseId: CaseId }) {
-  const workflow = WORKFLOWS[caseId];
+  const workflow = { description: DESCRIPTIONS[caseId], dependency: caseId === "UC03" ? "Supplier integration/pricing is confirmed. Actual interface contract is not supplied; other capabilities remain unverified." : "Actual vendor names, adapter contracts and coverage are unverified here; missing setup is not a claimed business gap.", stages: [
+    { label: BASELINE_LABELS[caseId], detail: "Existing baseline · simulated here", icon: ShieldCheck },
+    { label: "Coverage check", detail: "Answered already? Stop; zero Parallel calls", icon: FileCheck2 },
+    { label: caseId === "UC03" ? "Competitor benchmark" : "Precise extra question", detail: "Optional, explicit action only", icon: Search },
+    { label: "Incremental evidence", detail: "Supported additions, coverage and reviewer effort", icon: BookOpen },
+  ] };
   return (
     <section aria-label="Workflow overview" className="border-y border-border py-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div>
-          <p className="mb-1 font-mono text-xs uppercase text-primary">Proposed first version</p>
+          <p className="mb-1 font-mono text-xs uppercase text-primary">Baseline first · candidate experiment</p>
           <p className="max-w-3xl text-sm leading-relaxed text-foreground">{workflow.description}</p>
         </div>
         {workflow.dependency && <div className="border-l-2 border-border pl-4">
