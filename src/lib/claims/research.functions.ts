@@ -195,7 +195,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
           rec.result["competitor_comparisons"] = comparisons;
           rec.facts = comparisons.map((q: any, i: number) => fact({ fact_id: `competitor-${i}`, entity_id: q.supplier, attribute: "public_retail_rental_total", origin: "live_web", evidence_type: "posted_rate", status: q.comparable ? "supported" : "insufficient", number_decimal: q.total_usd, unit: "USD", currency: "USD", qualifiers: [...q.mismatches, q.rate_basis ?? "unknown rate basis", q.availability_basis ?? "unknown availability"], citations: q.url && q.excerpt ? [{ source_ref: q.url, url: q.url, excerpt: q.excerpt }] : [] }, captured));
         }
-        const d = deriveLiveResult(rec.case_id, rec.facts, rec.input, (rec.result as any).outbound_context, captured);
+        const d = rec.case_id === "UC03" ? { extra: [], result: {}, gaps: rec.facts.length ? [] : ["No supported retrievable competitor quotes. Prices remain unknown."] } : deriveLiveResult(rec.case_id, rec.facts, rec.input, (rec.result as any).outbound_context, captured);
         rec.facts.push(...d.extra);
         rec.result = { ...rec.result, ...d.result, provider_output: { content: res?.output?.content ?? null, basis: res?.output?.basis ?? null }, usage: res?.run?.usage ?? res?.usage ?? null };
         rec.gaps = [...(res?.output?.content?.gaps ?? []), ...d.gaps];

@@ -5,7 +5,7 @@
 - [x] Gate optional external exceptions behind an explicit question and action; no validated gap yet.
 - [x] Amend authorized rental specifications and scope notes; retain import-integrity warning.
 - [x] Test zero Parallel calls, supplier failures, simulation labels and exception gates; inspect the pages.
-- [ ] Apply baseline-first contracts, mock adapters and explicit research gates to all five cases.
-- [ ] Add matched competitor-only rental benchmarking and separate switching scenarios.
-- [ ] Update all five descriptions, project scope and question-led research prompts.
-- [ ] Run baseline, outage, benchmark and provenance checks; verify all five pages.
+- [x] Apply baseline-first contracts, mock adapters and explicit research gates to all five cases.
+- [x] Add matched competitor-only rental benchmarking and separate switching scenarios.
+- [x] Update all five descriptions, project scope and question-led research prompts.
+- [x] Run baseline, outage, benchmark and provenance checks; verify all five pages.
