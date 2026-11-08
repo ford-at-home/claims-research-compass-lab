@@ -17,6 +17,7 @@ export const rentalScenarioSchema = z.object({
     insurer_rules: z.object({ rule_version: z.string(), max_review_days: z.number().int().positive().nullable(), origin: z.literal("simulated_fixture") }),
     supplier_fixture: z.object({ daily_all_in_usd: z.string().nullable(), supplier_identity: z.string().nullable().optional(), excluded_supplier_groups: z.array(z.string()).optional(), rate_basis: z.string().optional(), response_status: z.enum(["ok", "error", "incomplete"]) }),
     switching_cost_usd: z.string().nullable().optional(),
+    public_supplier_exclusion: z.object({ name: z.string().max(120), same_group_names: z.array(z.string().max(120)).max(10) }).optional(),
   }),
 });
 export type RentalScenario = z.infer<typeof rentalScenarioSchema>;

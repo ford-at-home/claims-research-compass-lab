@@ -5,6 +5,7 @@ vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
   return builder;
 } }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
+vi.mock("@tanstack/react-start/server", () => ({ getRequest: () => new Request("http://localhost:8080", { headers: { authorization: "Bearer test-session" } }) }));
 vi.mock("@/lib/claims/parallel.server", () => ({ getKey: vi.fn(() => { throw new Error("Parallel must not be reached"); }), parallelRequest: vi.fn(), ParallelError: class extends Error {} }));
 import { startLiveRun, resumeLiveRun } from "@/lib/claims/research.functions";
 import { getKey, parallelRequest } from "@/lib/claims/parallel.server";
@@ -19,11 +20,15 @@ describe("UC03 server dispatch", () => {
   it("explicit competitor dispatch sends only outside competitor research and persists a single Task", async () => {
     const input = FIXTURE_INPUTS.UC03;
     const baseline = runBaselineFixture("UC03", input, await inputHash(input));
+    baseline.mode = "live";
+    baseline.result["baseline_source"] = "demo";
+    baseline.result["owner_id"] = "owner";
     const key = vi.mocked(getKey).mockReturnValue("test-only-key");
     const request = vi.mocked(parallelRequest).mockImplementation(async (_method, path) => path === "/v1/search" ? { results: [] } : { run_id: "competitor-task" });
-    const from = () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { result: baseline }, error: null }) }) }), insert: () => ({ select: () => ({ single: async () => ({ data: { id: "stored-benchmark" }, error: null }) }) }), update: () => ({ eq: async () => ({ error: null }) }) });
+    const selection = { eq: () => selection, single: async () => ({ data: { result: baseline }, error: null }) };
+    const from = () => ({ select: () => selection, insert: () => ({ select: () => ({ single: async () => ({ data: { id: "stored-benchmark" }, error: null }) }) }), update: () => ({ eq: async () => ({ error: null }) }) });
     const handler = startLiveRun as unknown as (args: unknown) => Promise<{ provider_ids: Record<string, string> }>;
-    const r = await handler({ data: { caseId: "UC03", input, baselineId: "baseline-id", intent: { action: "benchmark_competitor_rates", question: "Competitor prices same area", reason: "requested_benchmark" } }, context: { userId: "owner", supabase: { from } } });
+    const r = await handler({ data: { caseId: "UC03", input, baselineSource: "demo", baselineId: "baseline-id", intent: { action: "benchmark_competitor_rates", question: "Competitor prices same area", reason: "requested_benchmark" } }, context: { userId: "owner", supabase: { from } } });
     const calls = request.mock.calls;
     expect(calls.map((c) => c[1])).toEqual(["/v1/search", "/v1/tasks/runs"]);
     expect(JSON.stringify(calls)).not.toContain("50.00");
@@ -63,7 +68,8 @@ describe("UC03 server dispatch", () => {
   });
   it("cannot resume an old rental task through Parallel", async () => {
     const old = { case_id: "UC03", status: "running", provider_ids: { task_run_id: "old-task" } };
-    const context = { supabase: { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { result: old }, error: null }) }) }) }) } };
+    const selection = { eq: () => selection, single: async () => ({ data: { result: old }, error: null }) };
+    const context = { userId: "owner", supabase: { from: () => ({ select: () => selection }) } };
     const handler = resumeLiveRun as unknown as (args: unknown) => Promise<unknown>;
     expect(await handler({ data: { dbId: "old-record" }, context })).toEqual(old);
     expect(parallelRequest).not.toHaveBeenCalled();

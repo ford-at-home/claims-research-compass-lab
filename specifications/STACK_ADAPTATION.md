@@ -6,6 +6,14 @@ The revised source contains 51 specification acceptance cases. That count is not
 
 ## Current revision reconciliation
 
+### Explicit Live demo baseline source
+
+Live source selection is now explicit: `demo` invokes the mock primary adapter without Parallel; `connected` retains the unconfigured actual-adapter error. Fixture remains the default. No failed integration automatically loads a mock or public substitute. Demo baseline records remain Live-mode setup records with simulated facts, null capture time, source selection, owner ID and input hash; only completed genuine external runs are replayable.
+
+Subsequent explicit research validates owner, source, matching input hash and unanswered-question eligibility before checking the key or making calls. Mixed displays and readable exports separate simulated primary values from live web evidence and label deltas as demo arithmetic, not real savings or insurer quotes. Rental may include only an optional allowlisted public supplier exclusion name/group, never private agreement prices or terms.
+
+UC05 demo baseline and outside steps initialize, discover and call the mock enterprise service over actual HTTP MCP. The mock route now verifies the app user's bearer through Auth rather than requiring a separate mock token. No private insurer contract or new secret is required. Parallel still uses actual MCP HTTP, not the Task API relabeled as MCP. Raw protocol behavior is exercised with mocked fetch responses in tests, not claimed as provider success. Parallel HTTP remains gateway-backed and requires the configured connection key/project token; a manually saved provider key is not claimed to have been verified as a linked connection.
+
 - Runtime case prompts include the exact canonical prompts plus host evidence/security instructions and the reviewer's explicit question. Canonical request templates remain dormant until the existing local gate permits research; runtime replaces template placeholder questions and context, never sends the supplier rate.
 - UC03 maps canonical synthetic dates/class/seating, $50 daily rate and $35 separate switching cost into the host adapter contract. The competitor fixture reads $45/day and $18 mandatory fees from the canonical storyboard. Canonical simulated availability does not establish actual adapter inventory capability; runtime availability/extension fields remain null.
 - Rental provider Task output uses a host-specific `{benchmark_purpose, quotes}` schema rather than the generic findings template, to preserve exact comparison terms. `benchmark_purpose` is required and validated as `competitor_market_benchmark`, then preserved with comparisons and raw provider content/Basis. The canonical UC03 result schema also requires this purpose. Unknown/mismatched source terms remain noncomparable; same-supplier and known same-group quotes are excluded. Base benchmark totals are $150/$153, delta $3/2%; the $188 switching scenario is separate and simulated.
@@ -20,7 +28,7 @@ The revised source contains 51 specification acceptance cases. That count is not
 | SQLite review records | Browser-local review dispositions (`localStorage`), exported with runs |
 | Python `Decimal` | `decimal.js` (`src/lib/claims/calc.ts`) |
 | Background worker | Task created once, provider `run_id` persisted immediately; browser polls `resumeLiveRun`, which only reads status/result and never resubmits |
-| mock-enterprise MCP over **stdio** | Same tools served over **Streamable HTTP MCP** at `/api/mock-enterprise-mcp`, guarded by a server-only token. The host reaches it through MCP JSON-RPC (`initialize`, `tools/list`, `tools/call`), not a direct import. Edge workers cannot spawn stdio subprocesses. |
+| mock-enterprise MCP over **stdio** | Same tools served over **Streamable HTTP MCP** at `/api/mock-enterprise-mcp`, protected by authenticated app bearer verification. The host reaches it through MCP JSON-RPC (`initialize`, `tools/list`, `tools/call`), not a direct import. Edge workers cannot spawn stdio subprocesses. |
 | Parallel MCP | Streamable HTTP to `https://mcp.parallel.ai/mcp` with `Authorization: Bearer` (server-side key) |
 
 Live research functions require an authenticated session. Fixture mode runs entirely in the browser with no provider calls.

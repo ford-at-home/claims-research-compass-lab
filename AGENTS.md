@@ -40,3 +40,4 @@ use the editor.
 - All primary runs use baseline adapters before any research configuration; external server actions verify owned stored baseline, matching input hash and an explicit unanswered question. Rental competitor benchmarking is separate from supplier pricing and switching scenarios.
 - Canonical prompts and fixture amounts feed host adapters without editing source bytes; rental structured Task output requires validated benchmark purpose and comparison terms, because generic findings cannot express quote comparability safely.
 - Rental comparison presentation is isolated from dispatch and uses runtime-only additional fixture rows, so canonical source integrity and zero-call primary behavior remain unchanged.
+- Live demo baselines are explicit owned setup records with source/hash gates and simulated origins; mock enterprise uses authenticated HTTP MCP, so generic outside demos need no insurer credential and cannot become an outage fallback.

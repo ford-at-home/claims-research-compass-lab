@@ -51,6 +51,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
   const [exceptionMessage, setExceptionMessage] = useState<string | null>(null);
   const [baseline, setBaseline] = useState<RunRecord | null>(null);
   const [requestedBenchmark, setRequestedBenchmark] = useState(false);
+  const [baselineSource, setBaselineSource] = useState<"demo" | "connected">("connected");
   const isRental = caseId === "UC03";
 
   const startFn = useServerFn(startLiveRun);
@@ -129,7 +130,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
           return;
         }
         setProgress("Reading existing-system adapter…");
-        const r = await startFn({ data: { caseId, input: parsed.value, precisePoint: precise } });
+        const r = await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise } });
         setBaseline(r);
         setRun(r);
         if (r.status === "running" && r.provider_ids["db_run_id"]) {
@@ -158,7 +159,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
     setBusy(false);
   };
 
-  const replayable = stored.filter((r) => r.mode === "live" && r.status === "completed" && r.captured_at);
+  const replayable = stored.filter((r) => r.mode === "live" && r.status === "completed" && r.captured_at && r.result["research_intent"]);
   const review = (f: EvidenceFact, d: Disposition) => run && setReviews({ ...setReview(run.run_id, f, d) });
   const rr = run ? runReviews(run, reviews) : {};
   const doneSteps = run?.steps.filter((s) => s.status !== "pending").length ?? 0;
@@ -179,7 +180,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
       <div className={cn("rounded-md border px-3 py-2 text-sm", mode === "fixture" ? "border-sim-foreground/30 bg-sim text-sim-foreground" : mode === "live" ? "bg-live text-live-foreground" : "bg-replay text-replay-foreground")}>
         <strong className="uppercase tracking-wide">{mode}</strong> — {mode === "fixture" ? "Simulated baseline and optional external evidence" : mode === "live" ? "Existing capability first" : MODE_LABEL[mode]}.{" "}
         {mode === "fixture" && "Every observation is fabricated; no provider calls are made."}
-        {mode === "live" && "Existing adapters are unconfigured here. Primary runs never call Parallel. Optional research requires a successful baseline and a precise extra question."}
+        {mode === "live" && "Choose a simulated demo baseline deliberately, or a connected system (unconfigured here). Baseline loads never call Parallel; only a subsequent explicit unanswered question uses live outside research."}
         {mode === "replay" && "Shows only genuine previously captured live runs with their original capture time."}
       </div>
 
@@ -194,6 +195,11 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
             </Button>
           </div>
           <Textarea value={text} onChange={(e) => setText(e.target.value)} className="h-72 font-mono text-[11.5px]" spellCheck={false} aria-label="Scenario input JSON" />
+          {mode === "live" && <fieldset className="space-y-2 border-y py-3 text-xs">
+            <legend className="text-sm font-semibold">Existing-system baseline source</legend>
+            {([ ["demo", "Simulated existing-system baseline (demo)"], ["connected", "Connected existing system"] ] as const).map(([value, label]) => <label key={value} className="flex items-start gap-2"><input type="radio" name="baseline-source" value={value} checked={baselineSource === value} disabled={busy} onChange={() => { setBaselineSource(value); setBaseline(null); setRun(null); }} className="mt-0.5 accent-primary" /><span>{label}</span></label>)}
+            <p className="text-muted-foreground">{baselineSource === "demo" ? "SIMULATED internal data, intentional demo setup. Later web observations remain live and separate; differences are demo arithmetic, not real savings." : "Unconfigured actual adapter. Errors never switch to demo or web evidence."}</p>
+          </fieldset>}
           {!parsed.ok && <p className="text-xs text-bad-foreground">Invalid JSON: {parsed.error}</p>}
           {caseId === "UC04" && (
             <label className="flex items-center gap-2 text-xs">
@@ -259,7 +265,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
               setBusy(true);
               try {
                 const updatedInput = caseId === "UC05" ? { ...parsed.value, input: { ...parsed.value.input, question: exceptionQuestion } } : parsed.value;
-                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineId: baseline.provider_ids["db_run_id"], intent } }) : await startFn({ data: { caseId, input: parsed.value, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent } });
+                const r = mode === "fixture" ? isRental ? runBenchmarkFixture(baseline, currentHash) : runIncrementalFixture(caseId, updatedInput, currentHash) : caseId === "UC05" ? await warFn({ data: { input: parsed.value, baselineSource, baselineId: baseline.provider_ids["db_run_id"], intent } }) : await startFn({ data: { caseId, input: parsed.value, baselineSource, precisePoint: precise, baselineId: baseline.provider_ids["db_run_id"], intent } });
                 r.result = { ...r.result, scope_version: "baseline-first-v2", research_intent: intent, baseline_snapshot: baseline, incremental_metrics: incrementalMetrics(baseline, r) };
                 setRun(r);
                 if (mode === "fixture") { saveFixtureRun(r); setHistory(loadFixtureRuns(caseId).filter((x) => x.result["scope_version"] === "baseline-first-v2")); }
@@ -411,6 +417,7 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
         </div>
         {run.error && <p className="mt-2 rounded border border-bad-foreground/30 bg-bad p-2 text-sm text-bad-foreground">{run.error}</p>}
         {run.summary && <p className="mt-2 text-sm">{run.summary}</p>}
+        {run.result["simulated_primary"] && <p className="mt-2 border-l-2 border-sim-foreground pl-2 text-sm text-sim-foreground">SIMULATED existing-system baseline (demo). {run.result["demonstration_notice"] ?? "Internal values are fabricated; no Parallel call on baseline load."}</p>}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {run.steps.map((s) => (
             <Chip key={s.name} tone={s.status === "done" ? "ok" : s.status === "error" ? "bad" : "muted"}>{s.name}</Chip>
@@ -428,6 +435,10 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
         <p className="text-xs text-muted-foreground">Non-redundant coverage: {run.result["incremental_metrics"]?.non_redundant_coverage?.length ?? 0} sources · Reviewer effort not measured{run.mode === "fixture" ? " · SIMULATED" : ""}</p>
       </section>}
       {run.result["competitor_comparisons"] && <RentalComparison run={run} onFact={onFact} />}
+      {run.result["baseline_snapshot"] && run.result["simulated_primary"] && <section className="grid gap-3 border-y py-3 sm:grid-cols-2" aria-label="Separated primary and external evidence">
+        <div><h3 className="text-sm font-semibold"><Chip tone="sim">SIMULATED PRIMARY</Chip> Existing-system demo</h3>{(run.result["baseline_snapshot"] as RunRecord).facts.map((f) => <p key={f.fact_id} className="mt-2 text-xs">{f.attribute}: {f.number_decimal ?? f.value_text ?? "unknown"} {f.unit ?? ""} · {f.origin} · SIMULATED</p>)}</div>
+        <div><h3 className="text-sm font-semibold"><Chip tone="live">LIVE WEB</Chip> Outside observations</h3>{run.facts.filter((f) => f.origin === "live_web").map((f) => <p key={f.fact_id} className="mt-2 text-xs">{f.attribute}: {f.number_decimal ?? f.value_text ?? "unknown"} {f.unit ?? ""} · {f.status}</p>)}{!run.facts.some((f) => f.origin === "live_web") && <p className="mt-2 text-xs text-muted-foreground">No live external observation captured.</p>}</div>
+      </section>}
       {run.case_id === "UC05" && <WarRoom run={run} onFact={onFact} />}
 
       <div className="rounded-lg border bg-card">

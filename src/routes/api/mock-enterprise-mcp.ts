@@ -2,13 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { handleMockEnterpriseRpc } from "@/lib/claims/mock-enterprise";
 
 // Internal MCP (Streamable HTTP, JSON responses) for synthetic enterprise context.
-// Only the app backend holds the token; it is never sent to Parallel or the browser.
+// App authentication protects synthetic internal context; no separate insurer credential is needed.
 export const Route = createFileRoute("/api/mock-enterprise-mcp")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["MOCK_ENTERPRISE_MCP_TOKEN"];
-        if (!token || request.headers.get("x-mock-enterprise-token") !== token) return new Response("Unauthorized", { status: 401 });
+        const authorization = request.headers.get("authorization");
+        const bearer = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+        if (!bearer) return new Response("Unauthorized", { status: 401 });
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data, error } = await supabaseAdmin.auth.getUser(bearer);
+        if (error || !data.user) return new Response("Unauthorized", { status: 401 });
         let msg: unknown;
         try {
           msg = await request.json();
