@@ -13,5 +13,5 @@
 - [x] Import batch 2 and verify the complete manifest: 48/48 exact hashes, no extra canonical files.
 - [x] Remove stale rental spec path; reconcile runtime prompts, canonical fixture values, benchmark purpose and same-group exclusions.
 - [x] Verify current revision warning eligibility, retain failed original archive history, run 54 tests and inspect all five fixture flows and mobile layout.
-- [ ] Add two complete runtime-only simulated competitor quotes and an unknown candidate beside the supplier baseline.
-- [ ] Update rental title/metadata and verify comparison arithmetic, source hashes and desktop/mobile presentation.
+- [x] Add two complete runtime-only simulated competitor quotes and an unknown candidate beside the supplier baseline.
+- [x] Update rental title/metadata; 55 tests pass, all 48 source hashes unchanged, comparison/evidence and mobile checked.
