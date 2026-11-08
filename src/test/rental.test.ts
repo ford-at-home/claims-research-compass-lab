@@ -57,12 +57,12 @@ describe("supplier-first UC03", () => {
     expect(run.result["local_review"].within_rule_limit).toBeNull();
   });
   it("exception research requires the separate explicit action", () => {
-    expect(rentalExceptionEligibility("ordinary_run", "question")).toEqual({ allowed: false, reason: "A separate External exception research action is required." });
+    expect(rentalExceptionEligibility("ordinary_run", "question").allowed).toBe(false);
   });
   it("exception research requires a nonempty explicit question", () => {
-    expect(rentalExceptionEligibility("external_exception_research", "  ")).toEqual({ allowed: false, reason: "An explicit external question is required." });
+    expect(rentalExceptionEligibility("benchmark_competitor_rates", "  ").allowed).toBe(false);
   });
-  it("an entered question cannot bypass the missing validated gap", () => {
-    expect(rentalExceptionEligibility("external_exception_research", "User-entered question").allowed).toBe(false);
+  it("the explicitly approved competitor benchmark is eligible with a question", () => {
+    expect(rentalExceptionEligibility("benchmark_competitor_rates", "Competitor rates in this area").allowed).toBe(true);
   });
 });

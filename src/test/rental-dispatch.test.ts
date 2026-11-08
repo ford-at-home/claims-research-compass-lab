@@ -10,8 +10,20 @@ import { startLiveRun, resumeLiveRun } from "@/lib/claims/research.functions";
 import { getKey, parallelRequest } from "@/lib/claims/parallel.server";
 import { RENTAL_SAMPLE } from "@/lib/claims/rental";
 import { supplierAdapter } from "@/lib/claims/rental.server";
+import { liveBaselineAdapter } from "@/lib/claims/baseline.server";
 
 describe("UC03 server dispatch", () => {
+  for (const caseId of ["UC01", "UC02", "UC04", "UC05"]) it(`${caseId} primary server dispatch never reaches Parallel`, async () => {
+    const read = vi.spyOn(liveBaselineAdapter, "read");
+    const context = { userId: "owner", supabase: { from: () => ({ insert: () => ({ select: () => ({ single: async () => ({ data: { id: "baseline" }, error: null }) }) }) }) } };
+    const handler = startLiveRun as unknown as (args: unknown) => Promise<{ status: string }>;
+    const r = await handler({ data: { caseId, input: {} }, context });
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(r.status).toBe("error");
+    expect(parallelRequest).not.toHaveBeenCalled();
+    expect(getKey).not.toHaveBeenCalled();
+    read.mockRestore();
+  });
   it("dispatches to the Live supplier adapter before any Parallel key check or call", async () => {
     const supplier = vi.spyOn(supplierAdapter, "getPricing");
     const single = vi.fn(async () => ({ data: { id: "stored-rental" }, error: null }));
