@@ -14,7 +14,8 @@ export const rentalScenarioSchema = z.object({
     seats_needed: z.number().int().positive(),
     repair_status: z.object({ remaining_days: z.number().int().nonnegative().nullable(), origin: z.literal("mock_enterprise") }),
     insurer_rules: z.object({ rule_version: z.string(), max_review_days: z.number().int().positive().nullable(), origin: z.literal("simulated_fixture") }),
-    supplier_fixture: z.object({ daily_all_in_usd: z.string().nullable(), response_status: z.enum(["ok", "error", "incomplete"]) }),
+    supplier_fixture: z.object({ daily_all_in_usd: z.string().nullable(), supplier_identity: z.string().nullable().optional(), response_status: z.enum(["ok", "error", "incomplete"]) }),
+    switching_cost_usd: z.string().nullable().optional(),
   }),
 });
 export type RentalScenario = z.infer<typeof rentalScenarioSchema>;
@@ -32,7 +33,8 @@ export const RENTAL_SAMPLE: RentalScenario = {
     branch_reference: null, pickup_offset_days: 1, requested_days: 3, vehicle_class: "midsize", seats_needed: 5,
     repair_status: { remaining_days: 3, origin: "mock_enterprise" },
     insurer_rules: { rule_version: "simulation-v1", max_review_days: null, origin: "simulated_fixture" },
-    supplier_fixture: { daily_all_in_usd: "50.00", response_status: "ok" },
+    supplier_fixture: { daily_all_in_usd: "50.00", supplier_identity: "SIMULATED integrated supplier", response_status: "ok" },
+    switching_cost_usd: null,
   },
 };
 
@@ -51,9 +53,9 @@ export function mockSupplierAdapter(scenario: RentalScenario): SupplierAdapter {
 }
 
 export function rentalExceptionEligibility(action: unknown, question: unknown) {
-  if (action !== "external_exception_research") return { allowed: false, reason: "A separate External exception research action is required." };
+  if (action !== "benchmark_competitor_rates") return { allowed: false, reason: "A separate Benchmark competitor rates action is required." };
   if (typeof question !== "string" || !question.trim()) return { allowed: false, reason: "An explicit external question is required." };
-  return { allowed: false, reason: "No validated external gap has been identified. Research is not enabled; supplier pricing, coverage and reservations cannot be overridden." };
+  return { allowed: true, reason: "Competitor benchmarking is explicitly requested; a successful baseline and matched source terms are still required." };
 }
 
 /** Only the supplier adapter is a dependency. No Parallel client or fallback is reachable. */
