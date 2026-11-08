@@ -173,7 +173,7 @@ export function CaseScreen({ caseId }: { caseId: CaseId }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="font-mono text-xs text-primary">{caseId}</div>
-          <h1 className="text-2xl font-semibold">{meta.title}</h1>
+          <h1 className="text-2xl font-semibold">{meta?.title ?? caseId}</h1>
         </div>
         <ModeSelector mode={mode} onChange={(m) => { setMode(m); setRun(null); setBaseline(null); setProgress(null); }} />
       </div>

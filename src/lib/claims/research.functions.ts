@@ -190,11 +190,10 @@ export const startLiveRun = createServerFn({ method: "POST" })
       } else step(2, "skipped");
       // Task create (max 1) — no automatic resubmission
       const t = structuredClone(TASK_TEMPLATES[caseId]);
-      t.processor = caseId === "UC03" ? "pro" : process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
-      t.input.research_instructions = caseId === "UC03" ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question);
-      if (caseId === "UC03") t.task_spec.output_schema = { type: "json", json_schema: competitorTaskJsonSchema };
+      t.processor = process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
+      t.input.research_instructions = incrementalPrompt(caseId, data.intent.question);
       t.input.public_case_context = pub.context;
-      t.input.research_scope = { specific_question: data.intent.question, primary_response_public_summary: null, purpose: caseId === "UC03" ? "competitor_market_benchmark" : "unanswered_external_question", execute_only_after_local_gate: true };
+      t.input.research_scope = { specific_question: data.intent.question, primary_response_public_summary: null, purpose: "unanswered_external_question", execute_only_after_local_gate: true };
       t.input.discovered_source_excerpts = excerpts.slice(0, 12).map((x) => ({ ...x, excerpts: (x.excerpts ?? []).slice(0, 3).map((s: string) => String(s).slice(0, 1500)) }));
       if (containsCanary(t)) throw new Error("Outbound request contained private canary; aborted");
       rec.calls.task++;
@@ -397,7 +396,7 @@ async function completeResponse(rec: RunRecord, context: any, dbId: string, pare
   rec.provider_ids['response_id'] = parsed.id;
   rec.trace.push(R({ at: nowIso(), op: 'POST /v1/responses', transport: 'http', status: 'ok', request: body, response: parsed }));
   rec.summary = parsed.text;
-  rec.facts = parsed.annotations.filter((a: any) => a.url).map((a: any, i: number) => fact({ fact_id: `response-source-${i}`, entity_id: 'public_question', attribute: 'source_annotation', origin: 'live_web', status: 'candidate', value_text: a.title ?? a.url, citations: [{ source_ref: a.url, url: a.url, excerpt: '' }], qualifiers: ['URL annotation only; no exact source excerpt proof. Numeric claims require independent evidence.'] }, nowIso()));
+  rec.facts = parsed.annotations.filter((a: any) => a.url).map((a: any, i: number) => fact({ fact_id: `response-source-${i}`, entity_id: 'public_question', attribute: 'source_annotation', evidence_type: 'other', origin: 'live_web', status: 'candidate', value_text: a.title ?? a.url, citations: [{ source_ref: a.url, url: a.url, excerpt: '' }], qualifiers: ['URL annotation only; no exact source excerpt proof. Numeric claims require independent evidence.'] }, nowIso()));
   if (rec.case_id === 'UC03') {
     const quotes = competitorTaskOutputSchema.safeParse(parsed.structured);
     if (!quotes.success) throw new ParallelError('schema', null, 'Responses quote schema invalid; no inferred rates.');

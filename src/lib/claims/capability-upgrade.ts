@@ -18,7 +18,7 @@ export const ITEMS = {
   ],
 };
 export const EXAMPLES: Record<CaseId, string> = {
-  UC01: ITEMS.UC01[0].question, UC02: ITEMS.UC02[0].question,
+  UC01: ITEMS.UC01[0]?.question ?? '', UC02: ITEMS.UC02[0]?.question ?? '',
   UC03: 'Find other passenger-car rental branches and retrievable dated public quotes matching the supplied rental terms. Unknown fees or inventory remain unknown.',
   UC04: 'What does official NOAA storm-archive publication lag mean for same-day completeness? Missing publication does not establish absence of an event.',
   UC05: 'What do current public MCP Streamable HTTP initialization and tool-discovery documents require? Public facts do not establish the simulated internal connectivity root cause.',

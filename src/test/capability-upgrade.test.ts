@@ -32,7 +32,7 @@ describe('focused capability contracts', () => {
     });
     const client = new McpHttpClient('https://example.org/mcp',{}); await client.initialize();
     expect(await client.listTools()).toEqual({tools:[]});
-    expect(seen[2].get('mcp-session-id')).toBe('session-real');
-    expect(seen[2].get('mcp-protocol-version')).toBe('2025-06-18'); fetcher.mockRestore();
+    expect(seen[2]?.get('mcp-session-id')).toBe('session-real');
+    expect(seen[2]?.get('mcp-protocol-version')).toBe('2025-06-18'); fetcher.mockRestore();
   });
 });
