@@ -44,5 +44,6 @@ describe("all five existing-capability-first workflows", () => {
     expect(quotes[1].mismatches.length).toBeGreaterThan(0);
     const same = { ...quotes[0], supplier: "SIMULATED integrated supplier" };
     expect(compareCompetitorQuotes(b, [same], new Date().toISOString())[0]?.comparable).toBe(false);
+    expect(compareCompetitorQuotes(b, [{ ...quotes[0], quoted_at: "2020-01-01T00:00:00Z" }], new Date().toISOString())[0]?.total_usd).toBeNull();
   });
 });
