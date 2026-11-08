@@ -6,11 +6,13 @@ export const Route = createFileRoute("/uc03")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "UC03 Rental supplier integration baseline — Claims Research Lab" },
-      { name: "description", content: "Authoritative supplier pricing with local insurer rules and repair timing. No ordinary Parallel calls." },
-      { property: "og:title", content: "UC03 Rental supplier integration baseline — Claims Research Lab" },
-      { property: "og:description", content: "Supplier evidence for reviewer decisions; simulated demo data and an unconfigured Live adapter." },
+      { title: "UC03 Rental competitor rate benchmark — Claims Research Lab" },
+      { name: "description", content: "Compare matched competitor rental quotes with the integrated supplier baseline; ordinary supplier runs make zero Parallel calls." },
+      { property: "og:title", content: "UC03 Rental competitor rate benchmark — Claims Research Lab" },
+      { property: "og:description", content: "Supplier agreement versus public retail quotes, matched terms, evidence and separate switching scenarios. Fixture data is simulated; Live adapters remain unconfigured." },
+      { property: "og:url", content: "https://claims-research-compass-lab.lovable.app/uc03" },
     ],
+    links: [{ rel: "canonical", href: "https://claims-research-compass-lab.lovable.app/uc03" }],
   }),
   component: () => <CaseScreen caseId="UC03" />,
 });

@@ -84,7 +84,7 @@ export const MODE_LABEL: Record<Mode, string> = {
 export const CASES: { id: CaseId; slug: string; title: string; short: string; visible: string }[] = [
   { id: "UC01", slug: "uc01", title: "Salvage valuation", short: "Salvage", visible: "Existing valuation/salvage baseline plus optional outside comparables" },
   { id: "UC02", slug: "uc02", title: "Damage estimate verification", short: "Damage estimate", visible: "Existing estimate sources plus a defined outside exception" },
-  { id: "UC03", slug: "uc03", title: "Rental supplier integration baseline", short: "Rental baseline", visible: "Supplier pricing, local rules and repair timing for reviewer evidence" },
+  { id: "UC03", slug: "uc03", title: "Rental competitor rate benchmark", short: "Rental benchmark", visible: "Integrated supplier baseline plus optional matched competitor quotes" },
   { id: "UC04", slug: "uc04", title: "Loss verification", short: "Loss verification", visible: "Existing feeds plus precise missing corroboration" },
   { id: "UC05", slug: "uc05", title: "War room research with MCP", short: "War room (MCP)", visible: "Enterprise baseline plus genuinely external MCP evidence" },
 ];

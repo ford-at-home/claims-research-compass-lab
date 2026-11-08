@@ -26,6 +26,7 @@ import { WorkflowIntro } from "./WorkflowIntro";
 import { BASELINE_INFO, researchGate, incrementalMetrics, type ResearchIntent } from "@/lib/claims/baseline";
 import { runBaselineFixture, runIncrementalFixture } from "@/lib/claims/baseline-run";
 import { runBenchmarkFixture } from "@/lib/claims/benchmark-fixture";
+import { RentalComparison } from "./RentalComparison";
 
 const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
@@ -426,16 +427,7 @@ function RunView({ run, reviews, onFact, onResume, busy }: { run: RunRecord; rev
         <p className="mt-1">Supported additions: {run.result["incremental_metrics"]?.additional_supported_findings ?? 0} · Redundant findings: {run.result["incremental_metrics"]?.redundant_findings ?? 0}</p>
         <p className="text-xs text-muted-foreground">Non-redundant coverage: {run.result["incremental_metrics"]?.non_redundant_coverage?.length ?? 0} sources · Reviewer effort not measured{run.mode === "fixture" ? " · SIMULATED" : ""}</p>
       </section>}
-      {run.result["competitor_comparisons"] && <section className="space-y-3 border-y py-3" aria-label="Competitor comparison">
-        <h2 className="text-sm font-semibold">Public retail versus integrated supplier rate</h2>
-        {run.result["competitor_comparisons"].map((q: any, i: number) => <div key={i} className="border-l-2 pl-3 text-xs">
-          <strong>{q.supplier}</strong> · {q.comparable ? "Matched terms" : "Not comparable"}
-          <p>Base rental total: {q.total_usd ?? "unknown"} USD · Delta: {q.delta_vs_supplier_usd ?? "unknown"} USD</p>
-          <p>{q.rate_basis ?? "Unknown rate basis"} · {q.availability_basis ?? "Unknown availability"} · Quote: {q.quoted_at ?? "unknown"}</p>
-          <p className="text-muted-foreground">{q.comparison_basis} · {q.mismatches.join("; ")}</p>
-          <p>Separate switching scenario: {q.separate_switching_scenario.total_including_switching_usd ?? "unknown"} USD (switching cost: {q.separate_switching_scenario.switching_cost_usd ?? "unknown"})</p>
-        </div>)}
-      </section>}
+      {run.result["competitor_comparisons"] && <RentalComparison run={run} onFact={onFact} />}
       {run.case_id === "UC05" && <WarRoom run={run} onFact={onFact} />}
 
       <div className="rounded-lg border bg-card">
