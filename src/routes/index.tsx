@@ -1,23 +1,78 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getServerConfig } from "@/lib/claims/research.functions";
+import { CASES, PROJECT_TITLE } from "@/lib/claims/types";
+import { ACCEPTANCE } from "@/lib/claims/spec";
+import { Chip } from "@/components/claims/ui-bits";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Claims Research Lab — Generic Parallel Web Systems Claims Engineering Use Cases" },
+      { name: "description", content: "Five evidence-first claims research demos with explicit Fixture, Live and Replay modes." },
+      { property: "og:title", content: "Claims Research Lab" },
+      { property: "og:description", content: "Generic Parallel Web Systems Claims Engineering Use Cases — five research workflows." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const cfgFn = useServerFn(getServerConfig);
+  const cfg = useQuery({ queryKey: ["server-config"], queryFn: () => cfgFn() });
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
+      <div>
+        <div className="font-mono text-xs text-primary">About</div>
+        <h1 className="text-2xl font-semibold md:text-3xl">{PROJECT_TITLE}</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          A generic engineering suite for evidence-first claims research. All claim inputs are hypothetical; no insurer data or branding.
+          Research is kept separate from settlement, coverage, approval, booking and messaging decisions.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {CASES.map((c) => (
+          <Link key={c.id} to={`/${c.slug}` as "/uc01"} className="rounded-lg border bg-card p-4 transition-colors hover:border-primary">
+            <div className="font-mono text-xs text-primary">{c.id}</div>
+            <div className="font-semibold">{c.title}</div>
+            <div className="mt-1 text-sm text-muted-foreground">{c.visible}</div>
+          </Link>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="text-sm font-semibold">Modes</h2>
+          <ul className="mt-2 space-y-2 text-sm">
+            <li><Chip tone="sim">Fixture</Chip> Fabricated storyboard; zero provider calls.</li>
+            <li><Chip tone="live">Live</Chip> Real Parallel requests (signed-in users only); failures stay visible.</li>
+            <li><Chip tone="replay">Replay</Chip> Only genuine previously captured live runs, with capture time.</li>
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">No mode switches automatically. {ACCEPTANCE.length} acceptance cases ship with the specification package.</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="text-sm font-semibold">Server configuration (redacted)</h2>
+          {cfg.isLoading ? (
+            <p className="mt-2 text-sm text-muted-foreground">Checking…</p>
+          ) : cfg.error ? (
+            <p className="mt-2 text-sm text-bad-foreground">Status unavailable.</p>
+          ) : (
+            <dl className="mt-2 grid grid-cols-[1fr_auto] gap-y-1.5 text-sm">
+              <dt>PARALLEL_API_KEY</dt>
+              <dd><Chip tone={cfg.data?.parallel_api_key === "configured" ? "ok" : "bad"}>{cfg.data?.parallel_api_key}</Chip></dd>
+              <dt>Mock enterprise MCP token</dt>
+              <dd><Chip tone={cfg.data?.mock_enterprise_mcp_token === "configured" ? "ok" : "bad"}>{cfg.data?.mock_enterprise_mcp_token}</Chip></dd>
+              <dt>Task processor</dt>
+              <dd className="font-mono text-xs">{cfg.data?.task_processor}</dd>
+              <dt>Caps (search / extract / task / MCP)</dt>
+              <dd className="font-mono text-xs">{cfg.data?.limits.maxSearchRequests} / {cfg.data?.limits.maxExtractUrls} / {cfg.data?.limits.maxTaskCreates} / {cfg.data?.limits.maxMcpToolCalls}</dd>
+            </dl>
+          )}
+          {cfg.data?.parallel_api_key === "missing" && (
+            <p className="mt-3 text-xs text-muted-foreground">Live mode shows a server-configuration error until the key is added as a server secret. Fixture mode is fully usable.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

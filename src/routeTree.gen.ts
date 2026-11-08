@@ -10,11 +10,47 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as Uc01RouteImport } from './routes/uc01'
+import { Route as Uc02RouteImport } from './routes/uc02'
+import { Route as Uc03RouteImport } from './routes/uc03'
+import { Route as Uc04RouteImport } from './routes/uc04'
+import { Route as Uc05RouteImport } from './routes/uc05'
 import { Route as ApiMockEnterpriseMcpRouteImport } from './routes/api/mock-enterprise-mcp'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Uc01Route = Uc01RouteImport.update({
+  id: '/uc01',
+  path: '/uc01',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Uc02Route = Uc02RouteImport.update({
+  id: '/uc02',
+  path: '/uc02',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Uc03Route = Uc03RouteImport.update({
+  id: '/uc03',
+  path: '/uc03',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Uc04Route = Uc04RouteImport.update({
+  id: '/uc04',
+  path: '/uc04',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Uc05Route = Uc05RouteImport.update({
+  id: '/uc05',
+  path: '/uc05',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMockEnterpriseMcpRoute = ApiMockEnterpriseMcpRouteImport.update({
@@ -25,27 +61,76 @@ const ApiMockEnterpriseMcpRoute = ApiMockEnterpriseMcpRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/uc01': typeof Uc01Route
+  '/uc02': typeof Uc02Route
+  '/uc03': typeof Uc03Route
+  '/uc04': typeof Uc04Route
+  '/uc05': typeof Uc05Route
   '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/uc01': typeof Uc01Route
+  '/uc02': typeof Uc02Route
+  '/uc03': typeof Uc03Route
+  '/uc04': typeof Uc04Route
+  '/uc05': typeof Uc05Route
   '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/uc01': typeof Uc01Route
+  '/uc02': typeof Uc02Route
+  '/uc03': typeof Uc03Route
+  '/uc04': typeof Uc04Route
+  '/uc05': typeof Uc05Route
   '/api/mock-enterprise-mcp': typeof ApiMockEnterpriseMcpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/mock-enterprise-mcp'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/uc01'
+    | '/uc02'
+    | '/uc03'
+    | '/uc04'
+    | '/uc05'
+    | '/api/mock-enterprise-mcp'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/mock-enterprise-mcp'
-  id: '__root__' | '/' | '/api/mock-enterprise-mcp'
+  to:
+    | '/'
+    | '/auth'
+    | '/uc01'
+    | '/uc02'
+    | '/uc03'
+    | '/uc04'
+    | '/uc05'
+    | '/api/mock-enterprise-mcp'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/uc01'
+    | '/uc02'
+    | '/uc03'
+    | '/uc04'
+    | '/uc05'
+    | '/api/mock-enterprise-mcp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  Uc01Route: typeof Uc01Route
+  Uc02Route: typeof Uc02Route
+  Uc03Route: typeof Uc03Route
+  Uc04Route: typeof Uc04Route
+  Uc05Route: typeof Uc05Route
   ApiMockEnterpriseMcpRoute: typeof ApiMockEnterpriseMcpRoute
 }
 
@@ -56,6 +141,48 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uc01': {
+      id: '/uc01'
+      path: '/uc01'
+      fullPath: '/uc01'
+      preLoaderRoute: typeof Uc01RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uc02': {
+      id: '/uc02'
+      path: '/uc02'
+      fullPath: '/uc02'
+      preLoaderRoute: typeof Uc02RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uc03': {
+      id: '/uc03'
+      path: '/uc03'
+      fullPath: '/uc03'
+      preLoaderRoute: typeof Uc03RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uc04': {
+      id: '/uc04'
+      path: '/uc04'
+      fullPath: '/uc04'
+      preLoaderRoute: typeof Uc04RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uc05': {
+      id: '/uc05'
+      path: '/uc05'
+      fullPath: '/uc05'
+      preLoaderRoute: typeof Uc05RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/mock-enterprise-mcp': {
@@ -70,6 +197,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  Uc01Route: Uc01Route,
+  Uc02Route: Uc02Route,
+  Uc03Route: Uc03Route,
+  Uc04Route: Uc04Route,
+  Uc05Route: Uc05Route,
   ApiMockEnterpriseMcpRoute: ApiMockEnterpriseMcpRoute,
 }
 export const routeTree = rootRouteImport
