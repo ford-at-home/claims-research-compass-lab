@@ -1,0 +1,6 @@
+{
+  "revision": "2026-11-08-existing-systems-first",
+  "date": "2026-11-08",
+  "basis": "User confirmed existing rental integration, required the same baseline-first logic for every use case, and requested competitor rental rate comparison.",
+  "test_case_count": 51
+}

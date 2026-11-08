@@ -17,5 +17,18 @@
       "origin": "mock_enterprise",
       "private_canary": "MOCK_INTERNAL_ONLY_9F"
     }
+  },
+  "primary_system": {
+    "role": "existing enterprise systems and tools",
+    "origin": "mock_enterprise",
+    "actual_insurer_interface": "not_provided",
+    "coverage_to_confirm": true
+  },
+  "research_request": {
+    "requested": false,
+    "question": "A genuinely external vendor, public documentation or incident question that internal tools cannot answer.",
+    "purpose": "candidate_external_question",
+    "primary_answer_status": "not_checked",
+    "gap_status": "hypothesis_to_validate"
   }
 }

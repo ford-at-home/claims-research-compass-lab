@@ -17,5 +17,18 @@
     },
     "radius_km": "10.00",
     "question": "What public event evidence overlaps this hypothetical loss?"
+  },
+  "primary_system": {
+    "role": "existing weather catastrophe and incident sources",
+    "origin": "mock_enterprise",
+    "actual_insurer_interface": "not_provided",
+    "coverage_to_confirm": true
+  },
+  "research_request": {
+    "requested": false,
+    "question": "A specific missing local corroboration question after the existing source response is examined.",
+    "purpose": "candidate_external_question",
+    "primary_answer_status": "not_checked",
+    "gap_status": "hypothesis_to_validate"
   }
 }
