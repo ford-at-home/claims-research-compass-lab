@@ -1,0 +1,60 @@
+{
+  "transport": "stdio",
+  "server_name": "mock-enterprise",
+  "data_origin": "mock_enterprise",
+  "tools": [
+    {
+      "name": "get_case_context",
+      "description": "Return a synthetic scenario and its public research field allowlist.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "enum": [
+              "UC01",
+              "UC02",
+              "UC03",
+              "UC04",
+              "UC05"
+            ]
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_demo_rules",
+      "description": "Return simulated comparison rules and no production insurance policy.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "enum": [
+              "UC01",
+              "UC02",
+              "UC03",
+              "UC04",
+              "UC05"
+            ]
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "outbound_public_field_allowlist": [
+    "question",
+    "public_vehicle",
+    "region"
+  ],
+  "private_canary": "MOCK_INTERNAL_ONLY_9F",
+  "write_tools": []
+}

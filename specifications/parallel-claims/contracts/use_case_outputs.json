@@ -1,0 +1,67 @@
+{
+  "UC01": {
+    "use_case": "salvage_valuation",
+    "fields": {
+      "retail_comparables": "References to qualifying retail facts with asking or transaction basis.",
+      "salvage_comparables": "References to damaged vehicle facts with final sale status.",
+      "excluded_candidates": "Candidate IDs and explicit mismatch/access reasons.",
+      "recall_evidence": "Model campaigns and VIN specific open recall facts kept separate.",
+      "net_recovery_examples": "Deterministic examples only where gross sale and all required deductions are supported.",
+      "valuation_status": "research_only or insufficient_evidence; no settlement value."
+    },
+    "required_common_contract": "schemas/demo_run.schema.json",
+    "output_schema_file": "schemas/UC01_result.schema.json"
+  },
+  "UC02": {
+    "use_case": "damage_estimates",
+    "fields": {
+      "line_findings": "Estimate line IDs joined to evidence fact IDs.",
+      "match_status": "exact_supported, mismatch, needs_fitment_review, or insufficient_evidence per candidate.",
+      "price_components": "Part, quantity, mandatory fees, shipping, core charge, and unknown components.",
+      "comparisons": "Comparable totals and deltas calculated using Decimal, or null with a reason.",
+      "shop_checks": "Published identity/certification facts and source authority.",
+      "labor_checks": "Same discipline, geography and date, with method and coverage gaps."
+    },
+    "required_common_contract": "schemas/demo_run.schema.json",
+    "output_schema_file": "schemas/UC02_result.schema.json"
+  },
+  "UC03": {
+    "use_case": "rental_extensions",
+    "fields": {
+      "resolved_window": "Exact local pickup/return dates and times used for the run.",
+      "existing_option": "Internal mock or actual confirmed extension data with origin preserved.",
+      "alternative_quotes": "Quote facts with exact branch, class, dates, fees, timestamp and confirmation basis.",
+      "scenario_totals": "Known full totals using supported components; missing components yield null totals.",
+      "suitability": "Explicit class/seating/access comparisons, with unknowns.",
+      "next_action": "review_existing, confirm_supplier, or insufficient_evidence."
+    },
+    "required_common_contract": "schemas/demo_run.schema.json",
+    "output_schema_file": "schemas/UC03_result.schema.json"
+  },
+  "UC04": {
+    "use_case": "loss_verification",
+    "fields": {
+      "loss_window_utc": "Validated conversion of the supplied local time and uncertainty window.",
+      "events": "Source facts with event type, geometry/point, time, intensity and reporting status.",
+      "geographic_matches": "Computed distance or overlap with precision and method stated.",
+      "temporal_matches": "Computed overlap and explicit unknown timezone handling.",
+      "assessment": "corroborating, conflicting, or insufficient_evidence.",
+      "source_coverage": "Which categories, dates and jurisdictions were actually searched."
+    },
+    "required_common_contract": "schemas/demo_run.schema.json",
+    "output_schema_file": "schemas/UC04_result.schema.json"
+  },
+  "UC05": {
+    "use_case": "war_room_research",
+    "fields": {
+      "brief": "Cited narrative with facts separated from hypotheses and recommendations.",
+      "findings": "External fact references joined internally to allowed context references.",
+      "contradictions": "Conflicting sources with scope and date.",
+      "open_questions": "Items requiring shop, supplier, or internal verification.",
+      "mcp_trace": "Actual server label, discovered tool name, sanitized arguments, status, and source refs.",
+      "outbound_audit": "Fields sent outside and whether the private canary appeared."
+    },
+    "required_common_contract": "schemas/demo_run.schema.json",
+    "output_schema_file": "schemas/UC05_result.schema.json"
+  }
+}

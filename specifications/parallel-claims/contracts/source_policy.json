@@ -1,0 +1,25 @@
+{
+  "routing": {
+    "search": "advanced_settings.source_policy",
+    "task": "source_policy"
+  },
+  "rules": [
+    "Choose include_domains or exclude_domains, not both.",
+    "Keep source preference wording separate from mandatory filters.",
+    "Validate provenance of each returned citation; a domain match alone does not validate a fact."
+  ],
+  "UC04_weather": {
+    "include_domains": [
+      "weather.gov",
+      "noaa.gov"
+    ]
+  },
+  "UC04_roads_and_incidents": {
+    "include_domains": [
+      ".gov"
+    ]
+  },
+  "other_cases": {
+    "preference": "Prefer the original manufacturer, supplier, retailer, auction operator, or certifier. Validate access and licensing before adding licensed sources."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "case_id": "UC01",
+  "use_case": "salvage_valuation",
+  "data_origin": "synthetic",
+  "notice": "Hypothetical demo input. No real claim or predicted web result.",
+  "input": {
+    "vehicle": {
+      "year": 2018,
+      "make": "Toyota",
+      "model": "Camry",
+      "trim": "LE",
+      "mileage": 78000,
+      "vin": null
+    },
+    "location": {
+      "zip": "23220",
+      "state": "VA"
+    },
+    "damage": {
+      "area": "front",
+      "run_condition": "unknown",
+      "title_status": "unknown"
+    },
+    "valuation_mode": "current_market",
+    "valuation_date": null,
+    "fees": {
+      "auction_fee_usd": "220.00",
+      "transport_usd": "140.00",
+      "origin": "mock_enterprise"
+    }
+  }
+}

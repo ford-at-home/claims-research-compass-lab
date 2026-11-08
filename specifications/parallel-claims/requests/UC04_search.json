@@ -1,0 +1,18 @@
+{
+  "mode": "basic",
+  "objective": "Find official event observations for the supplied loss time window and location. Separate observed events, preliminary reports, warnings and forecasts. Return event time, timezone, location precision, reported magnitude and source publication date. A missing report is insufficient evidence, not evidence of no event. Do not infer vehicle damage, coverage, fraud, or liability.",
+  "search_queries": [
+    "Dallas May 26 2024 hail",
+    "NWS Dallas hail storm reports",
+    "NOAA storm events Dallas May 2024"
+  ],
+  "max_chars_total": 18000,
+  "advanced_settings": {
+    "source_policy": {
+      "include_domains": [
+        "weather.gov",
+        "noaa.gov"
+      ]
+    }
+  }
+}

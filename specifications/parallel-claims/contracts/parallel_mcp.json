@@ -1,0 +1,24 @@
+{
+  "url": "https://mcp.parallel.ai/mcp?tools=web_search,web_fetch,web_decisions,web_research",
+  "transport": "streamable-http",
+  "authentication": {
+    "header": "Authorization",
+    "value_source": "Bearer plus server-side PARALLEL_API_KEY"
+  },
+  "initialize_then_list_tools": true,
+  "required_tools": [
+    "web_search",
+    "web_fetch",
+    "web_decisions",
+    "web_research"
+  ],
+  "fixed_workflow": [
+    "mock-enterprise.get_case_context",
+    "mock-enterprise.get_demo_rules",
+    "local.public_context_filter",
+    "parallel.web_search",
+    "parallel.web_fetch",
+    "parallel.web_research",
+    "local.evidence_and_brief_review"
+  ]
+}

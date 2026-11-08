@@ -1,0 +1,12 @@
+{
+  "urls": [],
+  "objective": "Extract the exact attributes and qualifiers needed for the selected claims research case.",
+  "search_queries": [],
+  "session_id": null,
+  "advanced_settings": {
+    "full_content": false,
+    "fetch_policy": {
+      "max_age_seconds": 3600
+    }
+  }
+}

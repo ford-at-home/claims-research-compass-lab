@@ -1,0 +1,18 @@
+{
+  "state": {
+    "entity_name": null,
+    "official_url": null,
+    "question_context": null
+  },
+  "questions": {
+    "published_status": {
+      "type": "choice",
+      "instructions": "Classify the named published fact from current public evidence. Select unknown when evidence is missing, ambiguous or conflicting.",
+      "criteria": {
+        "documented": "An authoritative source explicitly documents the fact for the exact entity.",
+        "explicitly_not_documented": "An authoritative source explicitly says the fact is not applicable or is unavailable.",
+        "unknown": "Available evidence is missing, ambiguous or conflicting."
+      }
+    }
+  }
+}

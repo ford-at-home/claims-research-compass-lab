@@ -1,0 +1,182 @@
+[
+  {
+    "id": "UC01-01",
+    "test": "Run the explicit offline storyboard.",
+    "expected": "Show simulation labels on all fabricated observations; make zero provider calls."
+  },
+  {
+    "id": "UC01-02",
+    "test": "Run live mode with an unavailable source or no relevant results.",
+    "expected": "Keep missing values null and explain coverage; do not load fixture observations."
+  },
+  {
+    "id": "UC01-03",
+    "test": "Open each displayed numeric external fact.",
+    "expected": "Show source URL, supporting excerpt, qualifier context and timestamp provenance, or keep it non-actionable."
+  },
+  {
+    "id": "UC01-04",
+    "test": "Change a relevant input while research is active.",
+    "expected": "Retain the existing run with its input hash and require an explicit new run for the changed input."
+  },
+  {
+    "id": "UC02-01",
+    "test": "Run the explicit offline storyboard.",
+    "expected": "Show simulation labels on all fabricated observations; make zero provider calls."
+  },
+  {
+    "id": "UC02-02",
+    "test": "Run live mode with an unavailable source or no relevant results.",
+    "expected": "Keep missing values null and explain coverage; do not load fixture observations."
+  },
+  {
+    "id": "UC02-03",
+    "test": "Open each displayed numeric external fact.",
+    "expected": "Show source URL, supporting excerpt, qualifier context and timestamp provenance, or keep it non-actionable."
+  },
+  {
+    "id": "UC02-04",
+    "test": "Change a relevant input while research is active.",
+    "expected": "Retain the existing run with its input hash and require an explicit new run for the changed input."
+  },
+  {
+    "id": "UC03-01",
+    "test": "Run the explicit offline storyboard.",
+    "expected": "Show simulation labels on all fabricated observations; make zero provider calls."
+  },
+  {
+    "id": "UC03-02",
+    "test": "Run live mode with an unavailable source or no relevant results.",
+    "expected": "Keep missing values null and explain coverage; do not load fixture observations."
+  },
+  {
+    "id": "UC03-03",
+    "test": "Open each displayed numeric external fact.",
+    "expected": "Show source URL, supporting excerpt, qualifier context and timestamp provenance, or keep it non-actionable."
+  },
+  {
+    "id": "UC03-04",
+    "test": "Change a relevant input while research is active.",
+    "expected": "Retain the existing run with its input hash and require an explicit new run for the changed input."
+  },
+  {
+    "id": "UC04-01",
+    "test": "Run the explicit offline storyboard.",
+    "expected": "Show simulation labels on all fabricated observations; make zero provider calls."
+  },
+  {
+    "id": "UC04-02",
+    "test": "Run live mode with an unavailable source or no relevant results.",
+    "expected": "Keep missing values null and explain coverage; do not load fixture observations."
+  },
+  {
+    "id": "UC04-03",
+    "test": "Open each displayed numeric external fact.",
+    "expected": "Show source URL, supporting excerpt, qualifier context and timestamp provenance, or keep it non-actionable."
+  },
+  {
+    "id": "UC04-04",
+    "test": "Change a relevant input while research is active.",
+    "expected": "Retain the existing run with its input hash and require an explicit new run for the changed input."
+  },
+  {
+    "id": "UC05-01",
+    "test": "Run the explicit offline storyboard.",
+    "expected": "Show simulation labels on all fabricated observations; make zero provider calls."
+  },
+  {
+    "id": "UC05-02",
+    "test": "Run live mode with an unavailable source or no relevant results.",
+    "expected": "Keep missing values null and explain coverage; do not load fixture observations."
+  },
+  {
+    "id": "UC05-03",
+    "test": "Open each displayed numeric external fact.",
+    "expected": "Show source URL, supporting excerpt, qualifier context and timestamp provenance, or keep it non-actionable."
+  },
+  {
+    "id": "UC05-04",
+    "test": "Change a relevant input while research is active.",
+    "expected": "Retain the existing run with its input hash and require an explicit new run for the changed input."
+  },
+  {
+    "id": "UC01-05",
+    "test": "Mix retail asks, active bids and completed salvage sales.",
+    "expected": "Keep distinct tables; only supported final sales can support a completed-sale comparison."
+  },
+  {
+    "id": "UC01-06",
+    "test": "Check the offline net recovery calculation.",
+    "expected": "2450.00 minus 220.00 minus 140.00 equals 2090.00; label this a simulated example."
+  },
+  {
+    "id": "UC02-05",
+    "test": "Compare headline prices from the offline fixture.",
+    "expected": "395.00 plus 25.00 equals 420.00, delta 0.00; exclude wrong condition and unavailable items."
+  },
+  {
+    "id": "UC02-06",
+    "test": "Provide wages or a national average instead of local shop rates.",
+    "expected": "Do not present the input as a comparable regional shop labor rate."
+  },
+  {
+    "id": "UC03-05",
+    "test": "Compare a low daily quote that adds fees and transfer cost.",
+    "expected": "45.00 times 3 plus 18.00 plus 35.00 equals 188.00 versus the simulated 150.00 existing option."
+  },
+  {
+    "id": "UC03-06",
+    "test": "Only a public advertised price is available.",
+    "expected": "Label supplier confirmation pending and do not claim confirmed inventory or extend the reservation."
+  },
+  {
+    "id": "UC04-05",
+    "test": "Supply a warning and no observed event report.",
+    "expected": "Do not count the warning as an observation; return insufficient observational evidence."
+  },
+  {
+    "id": "UC04-06",
+    "test": "Use a wrong or missing timezone or ZIP-only location.",
+    "expected": "Expose uncertainty; do not manufacture a point match or exact time overlap."
+  },
+  {
+    "id": "UC05-05",
+    "test": "Inspect actual MCP connections and tool trace.",
+    "expected": "Show calls to two discovered MCP servers; a direct Python mock import is not sufficient for MCP acceptance."
+  },
+  {
+    "id": "UC05-06",
+    "test": "Inspect serialized outbound requests.",
+    "expected": "MOCK_INTERNAL_ONLY_9F, internal counts, names and claim identifiers are absent."
+  },
+  {
+    "id": "SYS-01",
+    "test": "Select live mode without PARALLEL_API_KEY.",
+    "expected": "Show a configuration error without printing a secret or switching modes."
+  },
+  {
+    "id": "SYS-02",
+    "test": "Return HTTP 401, 402, 403 or 422.",
+    "expected": "Stop the affected operation with a clear reason; do not silently retry or change provider."
+  },
+  {
+    "id": "SYS-03",
+    "test": "Lose a Task create response after submission.",
+    "expected": "Record submission_unknown; do not automatically create a second research task."
+  },
+  {
+    "id": "SYS-04",
+    "test": "Reach a local wait deadline with a known provider run ID.",
+    "expected": "Keep the provider ID and offer Resume; do not assume that the remote task was cancelled."
+  },
+  {
+    "id": "SYS-05",
+    "test": "Return HTTP 429 on an idempotent read.",
+    "expected": "Honor Retry-After within the configured retry and wait limits; preserve the run on exhaustion."
+  },
+  {
+    "id": "SYS-06",
+    "test": "Return source text containing tool instructions.",
+    "expected": "Retain it as evidence text only and make no extra tool calls on its authority."
+  }
+]

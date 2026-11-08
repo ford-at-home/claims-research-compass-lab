@@ -1,0 +1,121 @@
+{
+  "notice": "All observations below are fabricated for an offline demonstration. They are not Parallel API results or market data. No public citation URLs are supplied.",
+  "UC01": {
+    "observations": [
+      {
+        "source_ref": "fixture://UC01/retail-A",
+        "type": "asking_price",
+        "amount_usd": "14500.00"
+      },
+      {
+        "source_ref": "fixture://UC01/auction-A",
+        "type": "completed_sale",
+        "amount_usd": "2450.00"
+      },
+      {
+        "source_ref": "fixture://UC01/auction-B",
+        "type": "active_bid",
+        "amount_usd": "2800.00"
+      }
+    ],
+    "expected": {
+      "net_example_usd": "2090.00",
+      "formula": "2450.00 - 220.00 - 140.00",
+      "exclude_from_completed_sales": [
+        "auction-B"
+      ],
+      "settlement_value": null
+    }
+  },
+  "UC02": {
+    "observations": [
+      {
+        "source_ref": "fixture://UC02/OEM-A",
+        "part_identity": "simulated exact OEM left headlamp",
+        "unit_price_usd": "395.00",
+        "shipping_usd": "25.00",
+        "stock": "simulated_in_stock"
+      },
+      {
+        "source_ref": "fixture://UC02/aftermarket-B",
+        "part_identity": "simulated aftermarket headlamp",
+        "unit_price_usd": "160.00",
+        "stock": "simulated_in_stock"
+      },
+      {
+        "source_ref": "fixture://UC02/OEM-C",
+        "part_identity": "simulated exact OEM left headlamp",
+        "unit_price_usd": "310.00",
+        "stock": "simulated_out_of_stock"
+      }
+    ],
+    "expected": {
+      "comparable_total_usd": "420.00",
+      "delta_usd": "0.00",
+      "labor_rate_status": "insufficient_evidence",
+      "excluded": [
+        "aftermarket-B",
+        "OEM-C"
+      ]
+    }
+  },
+  "UC03": {
+    "observations": [
+      {
+        "source_ref": "fixture://UC03/alternative-A",
+        "daily_usd": "45.00",
+        "days": 3,
+        "mandatory_fees_usd": "18.00",
+        "availability": "advertised_only"
+      }
+    ],
+    "expected": {
+      "existing_total_usd": "150.00",
+      "alternative_including_transfer_usd": "188.00",
+      "formula": "45.00 * 3 + 18.00 + 35.00",
+      "supplier_confirmation_required": true
+    }
+  },
+  "UC04": {
+    "observations": [
+      {
+        "source_ref": "fixture://UC04/report-A",
+        "type": "event_observation",
+        "event_time": "2024-05-26T23:30:00Z",
+        "latitude": 32.78,
+        "longitude": -96.8,
+        "intensity": null
+      },
+      {
+        "source_ref": "fixture://UC04/warning-B",
+        "type": "warning",
+        "event_time": "2024-05-26T23:00:00Z",
+        "latitude": null,
+        "longitude": null,
+        "intensity": null
+      }
+    ],
+    "expected": {
+      "point_distance_km": "0.00",
+      "temporal_overlap": true,
+      "assessment": "corroborating",
+      "vehicle_damage_proven": false,
+      "warning_is_observation": false
+    }
+  },
+  "UC05": {
+    "observations": [
+      {
+        "source_ref": "fixture://UC05/notice-A",
+        "type": "simulated_official_notice",
+        "text": "A fabricated manufacturer notice for demonstration only."
+      }
+    ],
+    "expected": {
+      "private_canary_outbound": false,
+      "internal_context_origin": "mock_enterprise",
+      "delay_causation": "not_established",
+      "sources_origin": "simulated_fixture"
+    }
+  }
+}

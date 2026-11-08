@@ -1,0 +1,155 @@
+{
+  "type": "object",
+  "properties": {
+    "resolved_window": {
+      "type": "object",
+      "properties": {
+        "pickup_at": {
+          "type": "string"
+        },
+        "return_at": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pickup_at",
+        "return_at",
+        "timezone"
+      ],
+      "additionalProperties": false
+    },
+    "existing_option": {
+      "type": "object",
+      "properties": {
+        "fact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "mock_enterprise",
+            "licensed_source"
+          ]
+        }
+      },
+      "required": [
+        "fact_ids",
+        "origin"
+      ],
+      "additionalProperties": false
+    },
+    "alternative_quotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inclusion": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "fact_ids",
+          "inclusion",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "scenario_totals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option_id": {
+            "type": "string"
+          },
+          "total_fact_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "total_fact_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "suitability": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unresolved": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "option_id",
+          "fact_ids",
+          "unresolved"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "enum": [
+        "review_existing",
+        "confirm_supplier",
+        "insufficient_evidence"
+      ]
+    }
+  },
+  "required": [
+    "resolved_window",
+    "existing_option",
+    "alternative_quotes",
+    "scenario_totals",
+    "suitability",
+    "next_action"
+  ],
+  "additionalProperties": false
+}

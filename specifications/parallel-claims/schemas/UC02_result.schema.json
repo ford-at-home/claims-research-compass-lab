@@ -1,0 +1,143 @@
+{
+  "type": "object",
+  "properties": {
+    "line_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_id",
+          "fact_ids",
+          "notes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "match_status": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "exact_supported",
+              "mismatch",
+              "needs_fitment_review",
+              "insufficient_evidence"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "status",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "price_components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "component_fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unknown_components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "entity_id",
+          "component_fact_ids",
+          "unknown_components"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_id": {
+            "type": "string"
+          },
+          "total_fact_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delta_fact_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_id",
+          "total_fact_id",
+          "delta_fact_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "shop_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "labor_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "line_findings",
+    "match_status",
+    "price_components",
+    "comparisons",
+    "shop_checks",
+    "labor_checks"
+  ],
+  "additionalProperties": false
+}
