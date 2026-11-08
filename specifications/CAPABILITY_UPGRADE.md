@@ -16,3 +16,11 @@ Responses walks output_text, URL annotations, refusal and search/MCP trail; stor
 ## Validation boundaries
 
 The authorized minimal smoke uses public context only. No app auth users currently exist, so signed-in UI verification is unavailable without creating an account (not authorized). Server-client smoke is distinct from authenticated app flow verification. Actual results and limitations are recorded after checks; no unsupported native feature success is claimed.
+
+### Recorded public smoke — 2026-11-08
+
+Server key presence: configured. One low-effort public Responses attempt was rejected HTTP 401. Non-destructive credential verification returned gateway `type: unauthorized`, `title/message: Credential not found` (request `22fa932be20f1973aa1fdff709b7d0fc`). The project gateway credential was refreshed once as recommended; a second verification remained HTTP 401 (`65236c447f1aafaa6b04588f0b1fe492`). No response ID or live evidence was returned; no paid retries, Task submission, group, Place Search or anonymous/direct-provider fallback followed. No replay capture was fabricated.
+
+The available workspace connection listing returned no accessible Parallel connection. The existing configured secret was preserved, not inspected or replaced. Connection authorization needs repair through workspace connector settings: https://lovable.dev/connectors/parallel/connect?workspace=3wcY3gaOuLcFgPsGgY7W . This is an actual access blocker, not a missing-key claim or a provider-billing claim. Gateway key rotation did not resolve it; do not repeat rotation.
+
+Validation: 111 tests pass, including all original source-integrity, baseline/source/hash/owner gates plus selected-only batches, partial child results, owned saved-ID follow-ups, Responses annotations, CRLF/session/version MCP parsing and no-network Monitor previews. All five fixture baseline/extra-action flows were exercised in the preview; no runtime errors or document overflow at desktop/narrow widths. All 48 source hashes remain unchanged. Automatic check is healthy after resolving reported errors. Signed-in end-to-end and native unsupported endpoints remain unverified/unavailable.
