@@ -1,0 +1,10 @@
+{
+  "mode": "basic",
+  "objective": "Research retail comparable candidates and separately damaged salvage transactions for the supplied vehicle. Label asking prices, active bids, and completed sales separately. Return source dates, vehicle attributes, damage/title qualifiers, and recall scope. Return gaps for inaccessible sold data. Do not calculate an insurer valuation or invent prices.",
+  "search_queries": [
+    "2018 Camry LE used sale",
+    "2018 Camry front damage auction",
+    "2018 Toyota Camry recalls"
+  ],
+  "max_chars_total": 18000
+}

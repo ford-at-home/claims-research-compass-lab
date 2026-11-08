@@ -1,0 +1,40 @@
+{
+  "case_id": "UC02",
+  "use_case": "damage_estimates",
+  "data_origin": "synthetic",
+  "notice": "Hypothetical demo input. No real claim or predicted web result.",
+  "input": {
+    "vehicle": {
+      "year": 2020,
+      "make": "Toyota",
+      "model": "Camry",
+      "trim": "LE",
+      "vin": null
+    },
+    "shop": {
+      "name": "Simulated Repair Shop",
+      "zip": "23220",
+      "state": "VA",
+      "website": null,
+      "origin": "mock_enterprise"
+    },
+    "estimate_version": "synthetic-1",
+    "lines": [
+      {
+        "id": "L1",
+        "description": "left headlamp assembly",
+        "part_number": null,
+        "condition": "OEM new",
+        "quantity": 1,
+        "estimate_price_usd": "420.00"
+      },
+      {
+        "id": "L2",
+        "description": "body labor",
+        "hours": "2.00",
+        "rate_usd_per_hour": "65.00"
+      }
+    ],
+    "required_fitment_options": []
+  }
+}

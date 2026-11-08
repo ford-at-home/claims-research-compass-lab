@@ -1,0 +1,9 @@
+{
+  "mode": "basic",
+  "objective": "Research public manufacturer notices and authoritative repair guidance for the supplied vehicle family. Identify supported statements, contradictions and gaps. Do not infer that a recall or notice caused an internal repair delay. Do not include private identifiers or internal counts in outbound research.",
+  "search_queries": [
+    "Toyota Camry manufacturer repair notices",
+    "Toyota Camry official parts repair guidance"
+  ],
+  "max_chars_total": 18000
+}

@@ -1,0 +1,169 @@
+{
+  "type": "object",
+  "properties": {
+    "loss_window_utc": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inclusion": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "fact_ids",
+          "inclusion",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "geographic_matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "distance_fact_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "precision": {
+            "type": "string",
+            "enum": [
+              "point",
+              "area",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "event_id",
+          "method",
+          "distance_fact_id",
+          "precision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "temporal_matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "overlap",
+              "no_overlap",
+              "unknown"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "status",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assessment": {
+      "type": "string",
+      "enum": [
+        "corroborating",
+        "conflicting",
+        "insufficient_evidence"
+      ]
+    },
+    "source_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "query_window": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "searched",
+              "blocked",
+              "not_available",
+              "not_searched"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "query_window",
+          "status",
+          "notes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "loss_window_utc",
+    "events",
+    "geographic_matches",
+    "temporal_matches",
+    "assessment",
+    "source_coverage"
+  ],
+  "additionalProperties": false
+}

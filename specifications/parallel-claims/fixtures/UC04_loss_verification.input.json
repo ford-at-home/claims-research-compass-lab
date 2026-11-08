@@ -1,0 +1,21 @@
+{
+  "case_id": "UC04",
+  "use_case": "loss_verification",
+  "data_origin": "synthetic",
+  "notice": "Hypothetical demo input. No real claim or predicted web result.",
+  "input": {
+    "peril": "hail",
+    "reported_local_time": "2024-05-26T18:30:00-05:00",
+    "timezone": "America/Chicago",
+    "window_minutes": 90,
+    "location": {
+      "zip": "75201",
+      "state": "TX",
+      "latitude": 32.78,
+      "longitude": -96.8,
+      "precision": "simulated_point"
+    },
+    "radius_km": "10.00",
+    "question": "What public event evidence overlaps this hypothetical loss?"
+  }
+}

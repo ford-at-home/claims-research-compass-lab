@@ -1,0 +1,9 @@
+{
+  "mode": "basic",
+  "objective": "Research rental supplier branches, public quote access paths, terms and any actual quotes for the resolved exact dates/class. Do not invent live inventory, negotiated rates, or a quote when a site requires an interactive checkout that was not completed. Separate public price observations from supplier confirmed extension offers. Report access gaps.",
+  "search_queries": [
+    "Richmond midsize rental availability",
+    "Richmond rental extension rates fees"
+  ],
+  "max_chars_total": 18000
+}

@@ -1,0 +1,9 @@
+{
+  "mode": "basic",
+  "objective": "Research source supported part identifiers, fitment, exact part condition, published price components, shop details, and local posted body labor rates. A missing part identifier may yield candidate parts requiring review, never an assumed exact match. Do not substitute mechanic wages for shop labor rates. Do not invent negotiated prices or repair hours.",
+  "search_queries": [
+    "2020 Camry LE headlamp OEM",
+    "Richmond body repair posted rates"
+  ],
+  "max_chars_total": 18000
+}

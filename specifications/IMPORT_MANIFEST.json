@@ -1,0 +1,238 @@
+{
+  "title": "Generic Parallel Web Systems Claims Engineering Use Cases",
+  "imported_at": "2026-11-08T04:56:54.396Z",
+  "expected_sha256": "0a65a19e207449703d0dd8c1d58bc1abfd5e01e4084336b169dbb1c323efc9ee",
+  "actual_sha256_of_decompressed_bytes": "d7f7c27575fdbf859f56f6f1dab05f9fe001778ddc7e8d78c7a84ef7f62ad9ce",
+  "sha256_match": false,
+  "gzip_crc_check": "failed (incorrect data check); deflate stream decoded completely and JSON parsed",
+  "file_count": 45,
+  "expected_file_count": 45,
+  "note": "The decompressed bytes do not match the expected SHA-256. The base64 payload was transcribed from the chat handoff and may contain character errors; some file contents may differ slightly from the originals. Re-import from a byte-exact copy to confirm.",
+  "files": [
+    {
+      "path": "Generic_Parallel_Web_Systems_Claims_Engineering_Use_Cases.md",
+      "chars": 27295,
+      "sha256": "4b9daa3cd9a94ff338b1feb865e66d242fa90a472528405759d89d99208f40d1"
+    },
+    {
+      "path": "README.md",
+      "chars": 2822,
+      "sha256": "76514d106b9ed1c11b8fe102fb107b8800430a98352541dfca0d34899b2a09d6"
+    },
+    {
+      "path": "contracts/acceptance_cases.json",
+      "chars": 7246,
+      "sha256": "1666a8d245be5823d87631e2e1531ff2dd5f106ecdea89970f9887dc55de1319"
+    },
+    {
+      "path": "contracts/mock_enterprise_mcp.json",
+      "chars": 1342,
+      "sha256": "1be3b910a3fbbf5e632eb1a897b9feb9237412864184bfbc8fd3852269c77599"
+    },
+    {
+      "path": "contracts/parallel_mcp.json",
+      "chars": 652,
+      "sha256": "24a58385145f29222f7cb062160adfb1696db9a324290c388f9716ab7720898f"
+    },
+    {
+      "path": "contracts/source_policy.json",
+      "chars": 716,
+      "sha256": "bc6999764aef5609a990e51a98f79c5572c34c53b0b96c0ec8cdb213f1417ef8"
+    },
+    {
+      "path": "contracts/use_case_outputs.json",
+      "chars": 3838,
+      "sha256": "8ee8161ad7e8ae249cd06ce8e8b608cb958fe7948a1f7c71921004090da0f535"
+    },
+    {
+      "path": "environment.env.example",
+      "chars": 423,
+      "sha256": "9ff5d5c293cec37e1a2b7c0de50e68640cdc4608368338f9f62ca825cbece6e5"
+    },
+    {
+      "path": "fixtures/UC01_salvage_valuation.input.json",
+      "chars": 709,
+      "sha256": "871829a20a624e795233bc240c57220135b05c893963ee7593b98c8837254f1a"
+    },
+    {
+      "path": "fixtures/UC02_damage_estimates.input.json",
+      "chars": 915,
+      "sha256": "02328fdfb3fdfeda45f4d2d681510226cebef8988f94a841d264642e1a29f155"
+    },
+    {
+      "path": "fixtures/UC03_rental_extensions.input.json",
+      "chars": 682,
+      "sha256": "af6acb75f9f7a6dc86d6f88e473788ce71695b9283ba02a1c8c39bb2409b271f"
+    },
+    {
+      "path": "fixtures/UC04_loss_verification.input.json",
+      "chars": 584,
+      "sha256": "cd5d72a79eb658a08f0baf081c02bbd1a66c6209bd464fe728dba3e77c3af866"
+    },
+    {
+      "path": "fixtures/UC05_war_room_research.input.json",
+      "chars": 650,
+      "sha256": "a6b822c42f89781626588e7712a3402d4000bf036e4aceef18576228250f8574"
+    },
+    {
+      "path": "fixtures/offline_storyboards.json",
+      "chars": 3300,
+      "sha256": "019d8bc04c9f2fec46d485af7742ba7e7d3255cc8cd84fb7cf72afc14d25d283"
+    },
+    {
+      "path": "prompts/UC01_salvage_valuation.txt",
+      "chars": 1198,
+      "sha256": "8d804eb4106a1de8eaa708a749c76f3b385f6402960d1cb52961f07550192122"
+    },
+    {
+      "path": "prompts/UC02_damage_estimates.txt",
+      "chars": 1200,
+      "sha256": "1103c7f8df3ad1d20f8b5f02572fb516f5d09c2633642285ded535292df6b445"
+    },
+    {
+      "path": "prompts/UC03_rental_extensions.txt",
+      "chars": 1195,
+      "sha256": "b5d630dd4d1cdfc1fbcb94c3300886359f3de6966df8ee8b1edc9eb47ddf5b90"
+    },
+    {
+      "path": "prompts/UC04_loss_verification.txt",
+      "chars": 1222,
+      "sha256": "c80ab49f17c6844cf832fc89f13cbdb78d102f6741bf89a5e38a6f84ea7ba214"
+    },
+    {
+      "path": "prompts/UC05_war_room_research.txt",
+      "chars": 1150,
+      "sha256": "c49a73f3d34d2a9a25b529070aea1a97327af3a2571e714ece0f16dd6b95ea53"
+    },
+    {
+      "path": "prompts/shared_research_contract.txt",
+      "chars": 824,
+      "sha256": "0416ce5946357fd328dc52c137de6c895cf66ae6027712277941ac31e8027c8e"
+    },
+    {
+      "path": "requests/UC01_search.json",
+      "chars": 551,
+      "sha256": "55981778174c73a3340d95b51b143120db29036452407f1121a4bd6bcc238195"
+    },
+    {
+      "path": "requests/UC01_task.template.json",
+      "chars": 7382,
+      "sha256": "5fde889d7024bf88f6081198970a961d83fdc9a8ab7c9261f4b7a9d02b73cbe5"
+    },
+    {
+      "path": "requests/UC02_search.json",
+      "chars": 525,
+      "sha256": "4f95c33ee51b8c6c199782ef3bd90fbd881847262c6ba78238373f3e17f107a8"
+    },
+    {
+      "path": "requests/UC02_task.template.json",
+      "chars": 7416,
+      "sha256": "ddf5deb427771b9db2687a5fb3417dd16a2340fb731b456d092264a501f8b8f0"
+    },
+    {
+      "path": "requests/UC03_search.json",
+      "chars": 533,
+      "sha256": "296f642105ec16d9f14664eb8062e220ce3adf2ec3a981cc265e6e384273122a"
+    },
+    {
+      "path": "requests/UC03_task.template.json",
+      "chars": 7164,
+      "sha256": "c7ed78e71305eba207d9473a1b31fe174bacb53b8443dd0a9c2bf112355f2974"
+    },
+    {
+      "path": "requests/UC04_search.json",
+      "chars": 717,
+      "sha256": "28767965ff27f6f75ef05976d951eb2ccedd4b50bdb22be021c03342fdc81fb1"
+    },
+    {
+      "path": "requests/UC04_task.template.json",
+      "chars": 7425,
+      "sha256": "d863a99ee67e245d39d087f6b9687e92af230f127440f03d20587025ad3c8aa5"
+    },
+    {
+      "path": "requests/UC05_search.json",
+      "chars": 499,
+      "sha256": "7606907e3ff0ad0776563e3bc664d5dcd31b77459c5fb9ad0ee33c95a6831294"
+    },
+    {
+      "path": "requests/UC05_task.template.json",
+      "chars": 7193,
+      "sha256": "08f0e5d7d5719f0de9d58b9c02d0624907542966463922f0a843d8f55496d256"
+    },
+    {
+      "path": "requests/decisions.template.json",
+      "chars": 668,
+      "sha256": "2b6b7b1d7d1991f0433e75a3f520b3ab66b261f65c2a79c41a49a9406f204c13"
+    },
+    {
+      "path": "requests/extract.template.json",
+      "chars": 286,
+      "sha256": "d6a21a76a5f6c1b7feda2f4d065f29a7d30a060e23ee53fbf6107fc88106ad06"
+    },
+    {
+      "path": "schemas/UC01_result.schema.json",
+      "chars": 3426,
+      "sha256": "6846b496dbff0f2508f02d976e35cd28b7643073f0a2945a7daade0a27f37ec5"
+    },
+    {
+      "path": "schemas/UC02_result.schema.json",
+      "chars": 2922,
+      "sha256": "820b9aea8fdc1fbc84bc5f83d7cc5b85812797feb8adbe7087e3097353766b84"
+    },
+    {
+      "path": "schemas/UC03_result.schema.json",
+      "chars": 3147,
+      "sha256": "10ea3f6835233b5afd89eeb68d816d5d720c494d5e9cc47179e41496ba1474db"
+    },
+    {
+      "path": "schemas/UC04_result.schema.json",
+      "chars": 3440,
+      "sha256": "7f7eb8ff3cd236cb0f754e120536b7d504865b38d618e6ed2105fcc412748b49"
+    },
+    {
+      "path": "schemas/UC05_result.schema.json",
+      "chars": 1811,
+      "sha256": "f9ee8072e0302dbd36c81545ce36fa70ec40514be8f9b94f56e2e38c58a74732"
+    },
+    {
+      "path": "schemas/demo_run.schema.json",
+      "chars": 8606,
+      "sha256": "1c7f98d9705add6f1a0bc1584a4a84e063b8ecde1dbdf1139b9fa8a70d10acd5"
+    },
+    {
+      "path": "schemas/evidence_fact.schema.json",
+      "chars": 2920,
+      "sha256": "2352c8f28fa3a2f7c8e20c061241100e2b6cb37efe99f894fa9d66ab4e317610"
+    },
+    {
+      "path": "schemas/parallel_task_output.schema.json",
+      "chars": 4522,
+      "sha256": "7104bdf59f840e0ecac54ce4f72606e6f0c966e94025122d889a73a2bf75bc2d"
+    },
+    {
+      "path": "specs/UC01_salvage_valuation.md",
+      "chars": 2435,
+      "sha256": "d0d9b72777a83bfa104259fc027df642671c0b9aba8048e8420d05c26476b51a"
+    },
+    {
+      "path": "specs/UC02_damage_estimates.md",
+      "chars": 2528,
+      "sha256": "94cca63d42e3176fe49d68a7cee33f925802e706580a91b702551d41a1c1822a"
+    },
+    {
+      "path": "specs/UC02_rental_extensions.md",
+      "chars": 2545,
+      "sha256": "800b63dbf7be7cee80d0cf62199745b47a36b6e35df46a1baf5da0790ffa18f6"
+    },
+    {
+      "path": "specs/UC04_loss_verification.md",
+      "chars": 2413,
+      "sha256": "d285e30b73e85950c61091758af378ce29442d9409712d30a0468efcf56227b2"
+    },
+    {
+      "path": "specs/UC05_war_room_research.md",
+      "chars": 2536,
+      "sha256": "88c97969efb9deea196ef7018b53252d6270398890a5b5089a604fac9bf9970e"
+    }
+  ]
+}

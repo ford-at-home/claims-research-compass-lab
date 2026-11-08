@@ -1,0 +1,430 @@
+{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string",
+      "enum": [
+        "UC01",
+        "UC02",
+        "UC03",
+        "UC04",
+        "UC05"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "live",
+        "replay"
+      ]
+    },
+    "input_hash": {
+      "type": "string"
+    },
+    "spec_version": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "researching",
+        "validating",
+        "awaiting_review",
+        "partial",
+        "submission_unknown",
+        "failed",
+        "stopped"
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "provider_run_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fact_id": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "live_web",
+              "licensed_source",
+              "mock_enterprise",
+              "simulated_fixture",
+              "calculation"
+            ]
+          },
+          "value_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number_decimal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence_type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "supported",
+              "conflicting",
+              "insufficient",
+              "blocked",
+              "stale",
+              "simulated"
+            ]
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_ref": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "excerpt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_ref",
+                "url",
+                "excerpt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "retrieved_at": {
+            "type": "string",
+            "description": "Application recording time; never claim this is the publisher observation time."
+          },
+          "effective_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_observed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qualifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "provider_basis_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "For example findings.0. Preserve the raw Basis separately."
+            }
+          },
+          "vendor_confidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input_fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "fact_id",
+          "entity_id",
+          "attribute",
+          "origin",
+          "value_text",
+          "number_decimal",
+          "unit",
+          "currency",
+          "evidence_type",
+          "status",
+          "citations",
+          "retrieved_at",
+          "effective_at",
+          "published_at",
+          "source_observed_at",
+          "qualifiers",
+          "provider_basis_paths",
+          "vendor_confidence",
+          "formula",
+          "input_fact_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "case_result": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Null before a result is available; otherwise validated against the selected use case schema."
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "reported_cost_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estimated_cost_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "call_counts": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "reported_cost_usd",
+        "estimated_cost_usd",
+        "call_counts"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "run_id",
+    "case_id",
+    "mode",
+    "input_hash",
+    "spec_version",
+    "state",
+    "created_at",
+    "provider_run_ids",
+    "facts",
+    "case_result",
+    "gaps",
+    "usage"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "case_id": {
+            "const": "UC01"
+          }
+        },
+        "required": [
+          "case_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "UC01_result.schema.json"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "case_id": {
+            "const": "UC02"
+          }
+        },
+        "required": [
+          "case_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "UC02_result.schema.json"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "case_id": {
+            "const": "UC03"
+          }
+        },
+        "required": [
+          "case_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "UC02_result.schema.json"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "case_id": {
+            "const": "UC04"
+          }
+        },
+        "required": [
+          "case_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "UC04_result.schema.json"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "case_id": {
+            "const": "UC05"
+          }
+        },
+        "required": [
+          "case_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "UC05_result.schema.json"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "awaiting_review",
+              "partial"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_result": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

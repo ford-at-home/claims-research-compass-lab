@@ -1,0 +1,162 @@
+{
+  "type": "object",
+  "properties": {
+    "retail_comparables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inclusion": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "fact_ids",
+          "inclusion",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "salvage_comparables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inclusion": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "fact_ids",
+          "inclusion",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "excluded_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inclusion": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "fact_ids",
+          "inclusion",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "recall_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "net_recovery_examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "gross_fact_id": {
+            "type": "string"
+          },
+          "deduction_fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "net_fact_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "gross_fact_id",
+          "deduction_fact_ids",
+          "net_fact_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "valuation_status": {
+      "type": "string",
+      "enum": [
+        "research_only",
+        "insufficient_evidence"
+      ]
+    }
+  },
+  "required": [
+    "retail_comparables",
+    "salvage_comparables",
+    "excluded_candidates",
+    "recall_evidence",
+    "net_recovery_examples",
+    "valuation_status"
+  ],
+  "additionalProperties": false
+}
