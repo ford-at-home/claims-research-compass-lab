@@ -1,7 +1,7 @@
 // Loads the imported, unchanged specification package as actual JSON values.
 import uc01 from "../../../specifications/parallel-claims/fixtures/UC01_salvage_valuation.input.json";
 import uc02 from "../../../specifications/parallel-claims/fixtures/UC02_damage_estimates.input.json";
-import uc03 from "../../../specifications/parallel-claims/fixtures/UC03_rental_extensions.input.json";
+import { RENTAL_SAMPLE } from "./rental";
 import uc04 from "../../../specifications/parallel-claims/fixtures/UC04_loss_verification.input.json";
 import uc05 from "../../../specifications/parallel-claims/fixtures/UC05_war_room_research.input.json";
 import storyboards from "../../../specifications/parallel-claims/fixtures/offline_storyboards.json";
@@ -24,7 +24,7 @@ import taskOutputSchema from "../../../specifications/parallel-claims/schemas/pa
 import type { CaseId } from "./types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const FIXTURE_INPUTS: Record<CaseId, any> = { UC01: uc01, UC02: uc02, UC03: uc03, UC04: uc04, UC05: uc05 };
+export const FIXTURE_INPUTS: Record<CaseId, any> = { UC01: uc01, UC02: uc02, UC03: RENTAL_SAMPLE, UC04: uc04, UC05: uc05 };
 export const STORYBOARDS: any = storyboards;
 export const ACCEPTANCE: any[] = acceptance as any[];
 export const MOCK_ENTERPRISE: any = mockEnterprise;

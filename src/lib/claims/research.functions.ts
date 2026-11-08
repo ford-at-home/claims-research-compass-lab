@@ -12,6 +12,8 @@ import { buildPublicContext, searchQueries } from "./public-context";
 import { containsCanary, redact } from "./redact";
 import { EXTRACT_TEMPLATE, LIMITS, PARALLEL_MCP, TASK_TEMPLATES, SEARCH_TEMPLATES } from "./spec";
 import type { CaseId, RunRecord, TraceEntry } from "./types";
+import { runRentalLive } from "./rental.server";
+import { rentalExceptionEligibility } from "./rental";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const caseIdSchema = z.enum(["UC01", "UC02", "UC03", "UC04", "UC05"]);
@@ -60,7 +62,7 @@ function failRun(rec: RunRecord, e: unknown) {
 
 const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), precisePoint: z.boolean().optional() });
 
-/** Live UC01–UC04: Search → Extract → one Task create. Persists provider IDs immediately. */
+/** UC03 is supplier-only; UC01, UC02, UC04 retain their research paths. */
 export const startLiveRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => liveInput.parse(d))
@@ -68,6 +70,11 @@ export const startLiveRun = createServerFn({ method: "POST" })
     const caseId = data.caseId as CaseId;
     if (caseId === "UC05") throw new Error("UC05 uses the MCP route");
     const now = nowIso();
+    if (caseId === "UC03") {
+      const rental = runRentalLive(data.input, await inputHash(data.input), now);
+      rental.provider_ids["db_run_id"] = await saveRun(context.supabase, context.userId, rental);
+      return rental;
+    }
     const rec = emptyRun(caseId, "live", data.input, await inputHash(data.input), now);
     rec.status = "running";
     rec.steps = ["Validate & public context", "Search", "Extract", "Task create", "Poll result", "Normalize & calculate"].map((name) => ({ name, status: "pending" as const }));
@@ -154,6 +161,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase.from("research_runs").select("*").eq("id", data.dbId).single();
     if (error || !row) throw new Error("Run not found");
     const rec = row.result as unknown as RunRecord;
+    if (rec.case_id === "UC03") return rec; // Never poll historical rental Parallel tasks.
     const runId = rec.provider_ids["task_run_id"];
     if (!runId || rec.status !== "running") return rec;
     try {
@@ -196,8 +204,13 @@ export const listStoredRuns = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(30);
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((r: any) => ({ ...(r.result as RunRecord), provider_ids: { ...(r.result?.provider_ids ?? {}), db_run_id: r.id } }));
+    return (rows ?? []).filter((r: any) => data.caseId !== "UC03" || r.result?.result?.workflow === "supplier_integration_baseline").map((r: any) => ({ ...(r.result as RunRecord), provider_ids: { ...(r.result?.provider_ids ?? {}), db_run_id: r.id } }));
   });
+
+export const requestRentalException = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ action: z.string(), question: z.string() }).parse(d))
+  .handler(async ({ data }) => rentalExceptionEligibility(data.action, data.question));
 
 /** UC05 live: two actual MCP connections. Never fabricates a live trace. */
 export const runWarRoomLive = createServerFn({ method: "POST" })

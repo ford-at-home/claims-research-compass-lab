@@ -1,3 +1,7 @@
 - [x] Add pilot descriptions and supplied dependencies to all five workflow pages.
 - [x] Add a distinct visual research sequence above each scenario input.
 - [x] Verify all five pages at desktop and mobile sizes.
+- [x] Correct UC03 supplier-first scenario, dispatch and evidence display.
+- [x] Gate optional external exceptions behind an explicit question and action; no validated gap yet.
+- [x] Amend authorized rental specifications and scope notes; retain import-integrity warning.
+- [x] Test zero Parallel calls, supplier failures, simulation labels and exception gates; inspect the pages.

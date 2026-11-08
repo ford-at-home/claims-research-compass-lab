@@ -52,19 +52,10 @@ export function deriveLiveResult(caseId: CaseId, facts: EvidenceFact[], wrapper:
     };
   }
   if (caseId === "UC03") {
-    const quotes = facts.filter((f) => ["posted_rate", "supplier_quote"].includes(f.evidence_type));
     return {
       extra,
-      result: {
-        resolved_window: { pickup_at: ctx?.pickup_at, return_at: ctx?.return_at, timezone: ctx?.location?.timezone },
-        existing_option: { origin: "mock_enterprise", daily_all_in_usd: input.existing_extension?.daily_all_in_usd ?? null },
-        alternative_quotes: quotes.map((f) => ({ entity_id: f.entity_id, fact_ids: [f.fact_id], availability_basis: f.evidence_type === "supplier_quote" ? "supplier_quote_reported" : "advertised_only", supplier_confirmed: false })),
-        scenario_totals: quotes.map((f) => ({ entity_id: f.entity_id, total_usd: null, reason: "Branch, class, dates and all mandatory fees must be confirmed before a total" })),
-        suitability: [{ vehicle_class: input.vehicle_class, seats_needed: input.seats_needed, status: "unknown" }],
-        next_action: quotes.length ? "confirm_supplier" : "insufficient_evidence",
-        supplier_confirmation_required: true,
-      },
-      gaps: ["No inventory is confirmed by public research. No booking or reservation is made."],
+      result: { workflow: "superseded_rental_web_research", supplier_pricing: null },
+      gaps: ["Public research cannot establish authoritative supplier pricing. Use the supplier adapter baseline."],
     };
   }
   if (caseId === "UC04") {

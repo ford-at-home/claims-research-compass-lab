@@ -24,13 +24,13 @@ const WORKFLOWS: Record<CaseId, { description: string; dependency?: string; stag
     ],
   },
   UC03: {
-    description: "Compare extension options for the exact branch, dates, vehicle class, fees, and customer needs.",
-    dependency: "Supplier-confirmed extension pricing and availability.",
+    description: "Use pricing from the insurer’s existing rental supplier integration, combine it with local insurer rules and repair timing, and present evidence to the reviewer. Ordinary rental requests make zero Parallel calls.",
+    dependency: "The real supplier contract is not supplied here. Pricing is confirmed as a capability; availability, reservation and extension fields remain unverified.",
     stages: [
-      { label: "Extension needs", detail: "Branch, dates, class, customer", icon: CalendarDays },
-      { label: "Rental options", detail: "Matched branch and dates", icon: Car },
-      { label: "Full cost", detail: "Rates, fees, confirmation basis", icon: CircleDollarSign },
-      { label: "Cited comparison", detail: "Confirmation gaps · no booking", icon: FileCheck2 },
+      { label: "Supplier integration", detail: "Authoritative pricing · simulated here", icon: Car },
+      { label: "Local insurer rules", detail: "Known limits only · no approval", icon: ShieldCheck },
+      { label: "Repair timing", detail: "Requested days and repair context", icon: CalendarDays },
+      { label: "Reviewer evidence", detail: "Unknowns stay visible · no reservation changes", icon: FileCheck2 },
     ],
   },
   UC04: {

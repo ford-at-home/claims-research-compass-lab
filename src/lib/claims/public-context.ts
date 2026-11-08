@@ -1,4 +1,4 @@
-import { lossWindowUtc, resolveRentalWindow } from "./calc";
+import { lossWindowUtc } from "./calc";
 import type { CaseId } from "./types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -33,20 +33,7 @@ export function buildPublicContext(caseId: CaseId, wrapper: any, runDate = new D
       };
     }
     case "UC03": {
-      const tz = input.location?.timezone;
-      if (!tz || typeof input.pickup_offset_days !== "number" || typeof input.requested_days !== "number")
-        return { ok: false, reason: "Unresolved rental dates: timezone, pickup_offset_days and requested_days are required before any quote request" };
-      let w;
-      try {
-        w = resolveRentalWindow(runDate, tz, input.pickup_offset_days, input.requested_days);
-      } catch {
-        return { ok: false, reason: `Cannot resolve dates in timezone ${tz}` };
-      }
-      return {
-        ok: true,
-        context: { location: { zip: input.location.zip, state: input.location.state, timezone: tz }, pickup_at: w.pickup_at, return_at: w.return_at, requested_days: input.requested_days, vehicle_class: input.vehicle_class, seats_needed: input.seats_needed },
-        dropped: ["repair_status (mock_enterprise)", "existing_extension (mock_enterprise)", "transfer_cost_usd"],
-      };
+      return { ok: false, reason: "UC03 ordinary requests use the supplier integration only. No public research context or validated external gap." };
     }
     case "UC04": {
       const w = lossWindowUtc(input.reported_local_time, input.timezone, Number(input.window_minutes ?? 0));
@@ -81,7 +68,7 @@ export function searchQueries(caseId: CaseId, ctx: any): string[] {
     case "UC02":
       return [...(ctx.lines ?? []).filter((l: any) => l.condition).map((l: any) => `${veh} ${l.description} ${l.condition}`), `body labor rate ${ctx.location?.state ?? ""}`].slice(0, 3);
     case "UC03":
-      return [`${ctx.vehicle_class} car rental ${ctx.location?.zip} ${ctx.location?.state}`, `car rental branch ${ctx.location?.zip} fees`];
+      return [];
     case "UC04":
       return [`${ctx.peril} ${ctx.location?.zip} ${ctx.location?.state} ${String(ctx.loss_window_utc?.start ?? "").slice(0, 10)}`, `NWS storm reports ${ctx.peril} ${ctx.location?.state} ${String(ctx.loss_window_utc?.start ?? "").slice(0, 10)}`];
     case "UC05":
