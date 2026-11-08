@@ -345,7 +345,7 @@
                 "type": "null"
               },
               {
-                "$ref": "UC02_result.schema.json"
+                "$ref": "UC03_result.schema.json"
               }
             ]
           }

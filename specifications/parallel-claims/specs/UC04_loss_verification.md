@@ -2,27 +2,22 @@
 
 ## 7 UC04 Loss verification
 
-### User story and scenario
+### Existing capability baseline
 
-An associate seeks public event evidence for the date and location of a reported loss. The fixture describes a hypothetical Dallas hail loss on May 26 2024. The date and location are scenario inputs, not an assertion that a damaging event occurred. The supplied UTC offset and timezone must agree.
+Use existing catastrophe, weather, traffic and incident sources before public research. Actual source names and coverage have not been provided. An ordinary loss already covered by the existing response is demonstrated without Parallel calls.
 
-### Visible experience
+### Candidate external question
 
-Show a loss time window, an event timeline, source coverage and a location view. Distinguish observed events, preliminary reports, warnings and forecasts. A drawer shows exact location precision, time basis, intensity, source date and citation. Switchable subcases cover weather, road closures and public incident reports using their own source policies.
+A reviewer identifies a missing corroboration question: for example, a dated local closure notice or public incident detail absent from the source response being reviewed. Validate that the detail is actually missing; do not replace standard weather verification with a generic web search.
 
-### Parallel workflow
+### Workflow
 
-1. Convert the reported local time and uncertainty window to UTC. For the live seed, send ZIP and state by default; precise coordinates require a separate explicit demo setting.
-2. Search official weather sources for events, and transportation or public agency sources for closure/incident subcases. Extract event time, geometry or point, intensity and reporting status.
-3. Perform temporal overlap and distance or area overlap in local code. A ZIP-only result remains an area match. Unknown timezones or coordinates remain unresolved.
-4. Return corroborating, conflicting or insufficient evidence with the searched date, place and source coverage. Keep a warning separate from an observation.
+1. Load the existing source response and normalize the reported time, timezone and location uncertainty. Record the exact unresolved question.
+2. On explicit request, retrieve only relevant public event, closure or incident evidence. Preserve source type, time, geography, publication delay and precision.
+3. Calculate time and geography matches locally. Show what is new relative to the baseline. Keep warnings, forecasts, observations and preliminary reports distinct.
 
-### What the presenter demonstrates
+### Presenter and acceptance
 
-The fabricated offline observation occurs at the same synthetic point and within the loss time window. Its computed point distance is 0 km and its time overlaps. A second fabricated source is a warning without a reported point; it does not become an observed hail event. Corroboration does not establish that a vehicle was damaged.
+Run a baseline-covered fixture with zero external calls, followed by a selected missing-public-detail scenario. The existing 0 km observation and warning remain labeled simulation records demonstrating geography and source distinctions. Neither proves vehicle damage.
 
-### Acceptance and source timing
-
-Pass when timezone boundaries, adjacent areas, coarse locations, warnings and missing reports retain their distinctions. A missing report yields insufficient evidence. The NWS describes a publication delay for Storm Data and the Storm Events Database, so the recent-loss path needs a separately validated recent source. [D4]
-
-Do not classify coverage, fraud, liability or claim clearance. Use the UC04 output contract and both recent and historical event acceptance cases.
+Pass when baseline coverage is checked first, missing public records stay insufficient evidence, and public corroboration is not promoted into a coverage, liability or fraud decision. Historical archive delays remain relevant when choosing a genuinely additional recent source. [D4]

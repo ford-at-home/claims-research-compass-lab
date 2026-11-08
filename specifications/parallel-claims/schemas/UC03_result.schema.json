@@ -137,9 +137,15 @@
     "next_action": {
       "type": "string",
       "enum": [
-        "review_existing",
-        "confirm_supplier",
+        "review_benchmark",
+        "retain_primary_response",
         "insufficient_evidence"
+      ]
+    },
+    "benchmark_purpose": {
+      "type": "string",
+      "enum": [
+        "competitor_market_benchmark"
       ]
     }
   },
@@ -149,7 +155,8 @@
     "alternative_quotes",
     "scenario_totals",
     "suitability",
-    "next_action"
+    "next_action",
+    "benchmark_purpose"
   ],
   "additionalProperties": false
 }
