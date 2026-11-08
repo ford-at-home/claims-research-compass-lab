@@ -11,13 +11,13 @@ Build one generic demo suite with five use case screens and a shared evidence vi
 | --- | --- | --- |
 | UC01 | Salvage valuation | Separate vehicle value and damaged recovery evidence |
 | UC02 | Damage estimate verification | Line by line fitment and price findings |
-| UC03 | Rental extension research | Dated quote scenarios and confirmation gaps |
+| UC03 | Rental supplier integration baseline | Supplier pricing, local rules and repair timing for reviewer evidence |
 | UC04 | Loss verification | Event timeline and geographic match evidence |
 | UC05 | War room research with MCP | Cited brief and trace across two MCP servers |
 
 ### Implementation approach
 
-Proposed stack: Python, a Streamlit interface, a background research worker, and SQLite for run metadata and review records. Use Parallel HTTP APIs for UC01 through UC04. Use an MCP client connected to a local mock enterprise MCP server and Parallel MCP for UC05. Fixed workflow steps avoid a second model API key.
+Proposed stack: Python, a Streamlit interface, a background research worker, and SQLite for run metadata and review records. Use Parallel HTTP APIs for UC01, UC02 and UC04. UC03 ordinary requests use the existing supplier integration and make zero Parallel calls. Use an MCP client connected to a local mock enterprise MCP server and Parallel MCP for UC05. Fixed workflow steps avoid a second model API key.
 
 ### Package contents
 
@@ -156,30 +156,36 @@ Pass when wrong part condition, missing fitment, unavailable stock and missing c
 
 Use contracts/use_case_outputs.json UC02 and UC02 acceptance cases for exact output and test requirements.
 
-## 6 UC03 Rental extension research
+## 6 UC03 Rental supplier integration baseline
 
 ### User story and scenario
 
-An associate considers a rental extension when a customer requests more time. The supplied scenario has three requested days, a midsize class, five seats and simulated repair progress. Resolve pickup_offset_days against the run date in the supplied timezone; convert it to explicit pickup and return times before calling Parallel.
+User-authorized correction, November 8, 2026: the insurer already has a rental supplier integration. Supplier-confirmed pricing belongs to that integration, not open-web research. Pricing is confirmed as a capability; availability, inventory, reservation and extension fields remain unverified. No real supplier interface contract, endpoint or credential has been supplied to this project.
+
+An associate reviews supplier pricing with local insurer rules and repair timing. The synthetic sample has three requested days, midsize class, five seats and simulated repair context. Resolve dates locally; unknown branch reference and insurer rules stay unknown.
 
 ### Visible experience
 
-Show the existing extension option beside alternative branch quotes. Each column exposes exact dates, class, location, mandatory fees, mileage terms, quote time, expiry if supplied, availability basis and customer effort. Mark public price observations and supplier confirmed quotes differently.
+Show supplier integration -> local insurer rules and repair timing -> reviewer evidence. Label UC03 as the supplier integration baseline, not a Parallel value claim. Fixture supplier prices and local context remain explicitly simulated. Live exposes an unconfigured supplier adapter until the actual contract is provided. Display only known interface fields; keep unverified availability, reservation and extension confirmation null. Remove the public-rental-versus-contract-rate comparison.
 
-### Parallel workflow
+### Ordinary supplier workflow — zero Parallel calls
 
-1. Read simulated repair timing and the existing rate from the local enterprise adapter. Send only public location, exact dates, vehicle requirements and the research question outside.
-2. Search supplier branches and public quote paths. Fetch terms and any retrievable actual quotes. Use Task to extract dated observations and identify inaccessible interactive quoting steps.
-3. Keep quotes incomparable when class, dates, rate basis or required fees are unresolved. Public branch pages cannot substitute for a quote that was never obtained.
-4. Calculate complete known scenarios locally, including transfer cost. Return supplier confirmation needed when inventory or an extension offer is not actually confirmed.
+1. Validate the scenario and obtain authoritative pricing through the supplier adapter. Do not use fixture response fields in Live.
+2. Combine returned supplier data with local insurer rules and repair timing; retain origin and provenance.
+3. Calculate complete known costs using decimal-safe helpers, formulas and input fact references. Missing required pricing yields an integration error, never a fabricated amount.
+4. Present evidence to the reviewer. Failed or incomplete supplier responses stay integration errors and never invoke web research or quote fallback. No Search, Extract, Task or MCP calls occur on this path, including resume.
+
+### Optional external exception research
+
+Keep a distinct explicit External exception research action requiring a specific unanswered external question outside the supplier integration's known capabilities. No validated gap is supplied, so eligibility is blocked and no external call is made. Do not invent a need or duplicate supplier price research. Future exception results are advisory and cannot override supplier prices, coverage or reservations.
 
 ### What the presenter demonstrates
 
-The existing extension is a simulated all in $50 per day for three days, totaling $150. An alternative advertises $45 per day; three days plus $18 mandatory fees and $35 transfer cost totals $188. The alternative has advertised availability only. The display exposes both the cost difference and confirmation gap.
+The mock supplier response is an explicitly simulated all-in $50 per day for three requested days, totaling $150. The calculation stays simulated, and unknown availability and extension confirmation stay null. There is no public alternative price, transfer-cost comparison or savings claim. Local repair context and rules are simulated; no real insurer duration limit is invented.
 
 ### Acceptance and real data boundary
 
-Pass when dates and branch match, required fees are explicit, incomplete totals stay null, and advertised availability is never labeled supplier confirmed. A public lookup can legitimately end with no retrievable quote. The complete live inventory demonstration depends on an authorized supplier interface; a Parallel key alone does not establish that access. Enterprise describes date and location based availability checks and price changes for extensions. [D3]
+Pass when normal requests call the supplier adapter and make zero Parallel calls, supplier failures and missing pricing never trigger Parallel, mock prices stay labeled simulated, and exception eligibility requires an explicit question and separate action. Live remains unconfigured without the actual supplier interface contract. Do not infer insurer integration capabilities from vendor documentation. The executable contract is documented in STACK_ADAPTATION.md; historical imported UC03 research templates, output schema and storyboard alternatives are superseded for ordinary execution. These authorized amendments do not resolve the original import-integrity warning.
 
 The demo may recommend an associate review step. It does not set coverage, authorize rental duration, reserve a car or modify an existing reservation.
 
@@ -239,7 +245,7 @@ Use the unified Parallel MCP endpoint and selected tools in contracts/parallel_m
 
 ### Request assembly requirements
 
-requests contains five Search requests and five Task body templates. Load the selected prompt and schema as actual JSON values. Do not send file paths or unresolved placeholders as research context. For UC03, replace null pickup_at and return_at with resolved times before calling the API. For UC05, the Task body is an optional API comparison variant; it does not replace the required MCP path.
+requests contains five historical Search requests and five Task body templates. UC03 Search and Task templates are superseded and must not be dispatched for ordinary rentals. Its current scenario contract is supplier-first. For the other cases, load the selected prompt and schema as actual JSON values. Do not send file paths or unresolved placeholders as research context. For UC05, the Task body is an optional API comparison variant; it does not replace the required MCP path.
 
 Before submission, remove nonpublic fields and record the resulting outbound context. The fixture claim values are never factual assertions about the web. Add actual Search/Extract results to discovered_source_excerpts, retaining their source and timestamp provenance.
 

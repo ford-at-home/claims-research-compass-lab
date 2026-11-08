@@ -1,28 +1,34 @@
 [Inference] Proposed demo specification. All sample observations are simulated.
 
-## 6 UC03 Rental extension research
+## 6 UC03 Rental supplier integration baseline
 
 ### User story and scenario
 
-An associate considers a rental extension when a customer requests more time. The supplied scenario has three requested days, a midsize class, five seats and simulated repair progress. Resolve pickup_offset_days against the run date in the supplied timezone; convert it to explicit pickup and return times before calling Parallel.
+User-authorized correction, November 8, 2026: the insurer already has a rental supplier integration. Supplier-confirmed pricing comes from that integration, not Parallel. Pricing is the only confirmed capability; availability, reservation and extension fields are unverified until the real interface contract is provided. No supplier endpoint or credentials exist in this project.
+
+An associate reviews supplier pricing alongside local insurer rules and repair timing. The synthetic sample requests three days, midsize class and five seats. Resolve relative dates locally. Branch reference and insurer duration limits remain unknown; do not invent them.
 
 ### Visible experience
 
-Show the existing extension option beside alternative branch quotes. Each column exposes exact dates, class, location, mandatory fees, mileage terms, quote time, expiry if supplied, availability basis and customer effort. Mark public price observations and supplier confirmed quotes differently.
+Show the supplier integration baseline above the scenario: supplier integration -> local insurer rules -> repair timing -> reviewer evidence. Fixture supplier prices and local context are explicitly simulated. Live shows an unconfigured supplier adapter. Display only fields actually returned under a verified contract; unknown availability, reservations and extension confirmation remain null. Remove public-rental-versus-contract-rate comparisons.
 
-### Parallel workflow
+### Ordinary supplier workflow — zero Parallel calls
 
-1. Read simulated repair timing and the existing rate from the local enterprise adapter. Send only public location, exact dates, vehicle requirements and the research question outside.
-2. Search supplier branches and public quote paths. Fetch terms and any retrievable actual quotes. Use Task to extract dated observations and identify inaccessible interactive quoting steps.
-3. Keep quotes incomparable when class, dates, rate basis or required fees are unresolved. Public branch pages cannot substitute for a quote that was never obtained.
-4. Calculate complete known scenarios locally, including transfer cost. Return supplier confirmation needed when inventory or an extension offer is not actually confirmed.
+1. Validate the scenario and request supplier pricing through the supplier adapter. Live never consumes fixture response fields.
+2. Retain supplier provenance and combine returned pricing with local insurer rules and repair timing.
+3. Calculate requested-duration costs using decimal-safe arithmetic and input fact references only when the rate basis is complete.
+4. Present evidence and unresolved capabilities to the reviewer. A failed or incomplete supplier response remains an integration error. Never fall back to web quotes, Search, Extract, Task or MCP.
+
+### Optional external exception research
+
+A separate explicit External exception research action requires an explicit external question the supplier integration cannot answer. No validated external gap has been supplied; label that honestly and do not execute research or claim Parallel value. The action currently checks eligibility only. Future advisory results cannot override supplier prices, coverage or reservation state. Do not research or verify supplier pricing on the open web.
 
 ### What the presenter demonstrates
 
-The existing extension is a simulated all in $50 per day for three days, totaling $150. An alternative advertises $45 per day; three days plus $18 mandatory fees and $35 transfer cost totals $188. The alternative has advertised availability only. The display exposes both the cost difference and confirmation gap.
+The simulated supplier adapter returns an all-in $50 per day for three requested days, totaling $150. Both the rate and calculation remain labeled simulated. There is no public alternative, cost-saving assertion or confirmed availability. Repair timing is simulated; the local insurer duration limit is null pending real rules.
 
 ### Acceptance and real data boundary
 
-Pass when dates and branch match, required fees are explicit, incomplete totals stay null, and advertised availability is never labeled supplier confirmed. A public lookup can legitimately end with no retrievable quote. The complete live inventory demonstration depends on an authorized supplier interface; a Parallel key alone does not establish that access. Enterprise describes date and location based availability checks and price changes for extensions. [D3]
+Pass when a normal UC03 run calls the supplier adapter and makes zero Parallel calls, errors and missing pricing never trigger fallback, mock prices remain simulated, unverified fields stay null, and exception eligibility requires an explicit action and question. Live is unconfigured until a real supplier contract is supplied. Vendor documentation does not establish the insurer's interface capabilities. Historical imported UC03 web-research templates and schemas are superseded for ordinary execution; see STACK_ADAPTATION.md for the executable scenario contract. The original import-integrity warning remains unresolved.
 
 The demo may recommend an associate review step. It does not set coverage, authorize rental duration, reserve a car or modify an existing reservation.
