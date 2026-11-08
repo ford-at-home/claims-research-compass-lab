@@ -37,4 +37,4 @@ use the editor.
 - Task runs are created once and resumed by stored `task_run_id`; no automatic resubmission.
 - Money and distances use `decimal.js` helpers in `src/lib/claims/calc.ts`; unknown components return null.
 - Shared workflow introductions live in a presentation-only component keyed by CaseId; proposed process diagrams never imply a live connection or completed research.
-- UC03 dispatches exclusively to the supplier adapter before any Parallel configuration or research step; its standalone contract/evaluator keeps supplier failures fail-closed and exception eligibility separate.
+- All primary runs use baseline adapters before any research configuration; external server actions verify owned stored baseline, matching input hash and an explicit unanswered question. Rental competitor benchmarking is separate from supplier pricing and switching scenarios.
