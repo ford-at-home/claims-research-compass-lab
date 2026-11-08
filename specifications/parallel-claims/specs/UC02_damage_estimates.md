@@ -2,27 +2,22 @@
 
 ## 5 UC02 Damage estimate verification
 
-### User story and scenario
+### Existing capability baseline
 
-A damage reviewer checks a part, local labor rate and shop details before making an estimate decision. Use the hypothetical Camry estimate in fixtures/UC02_damage_estimates.input.json. A missing part number triggers candidate identification and fitment review; it is not an assumed exact match.
+Use the estimating system, parts and labor sources, repair information and vendor data already in the review workflow. Their exact interfaces and coverage must be confirmed before connecting; do not present normal estimating capabilities as missing.
 
-### Visible experience
+### Candidate external question
 
-Upload or edit estimate lines. Show the original line beside researched candidates, part condition, fitment evidence, stock basis, fees and comparable total. The reviewer can expand Match reasoning, Labor evidence and Shop details. A lower headline price is shown separately from its comparable full cost.
+Research an explicitly unresolved exception or requested independent comparison. Potential experiments include availability for an unusual part or a public manufacturer statement not represented in the response being reviewed. First check whether existing licensed or vendor data already answers the question.
 
-### Parallel workflow
+### Workflow
 
-1. Search OEM, dealer, supplier and recycler pages by vehicle and part identity. Extract exact identifiers, left or right side, trim/options, condition, price, quantity basis, shipping, core charges and stock statements.
-2. Research posted labor rates for the same repair discipline, geography and effective period. Keep sample coverage and methodology. Mechanic wages, national averages and negotiated insurer rates are different categories.
-3. Check shop identity and published certifications using shop or certifier sources. Do not search the fabricated shop name in the seed as if it were a real business; select a real public shop for a live identity check.
-4. Use Task findings and optional Decisions classification for a narrow published certification fact. Locally calculate comparable totals and differences only after fitment and terms are resolved.
+1. Load the estimate and relevant existing source response. Mark which attributes are answered, unresolved or unavailable. A routine answered line causes zero Parallel calls.
+2. For an approved external question, use the exact vehicle, part, condition, options and dates. Retrieve supporting source statements instead of re-running every routine price and labor lookup.
+3. Show only the incremental facts beside the existing answer. Calculate a delta only when identity and terms are comparable. Keep conflicting information and missing cost components visible.
 
-### What the presenter demonstrates
+### Presenter and acceptance
 
-The offline case estimates $420 for a simulated headlamp. One simulated exact OEM candidate is $395 plus $25 shipping, also $420. An aftermarket item at $160 and an unavailable OEM item at $310 are excluded from that comparison. The comparable delta is $0. Local labor evidence remains insufficient in the fixture.
+Demonstrate a normal estimate line answered by the mock estimating adapter, then an explicitly selected exception. The labeled $395 plus $25 shipping fixture remains $420; it demonstrates why headline prices alone are insufficient. It does not imply that the insurer lacks parts pricing.
 
-### Acceptance and review boundary
-
-Pass when wrong part condition, missing fitment, unavailable stock and missing cost components remain visible; unmatched items cannot become price reduction findings. Every computed difference lists its evidence inputs and formula. Repair necessity, labor hours, repair procedures and estimate approval remain outside the demo. There is no claimed supplement reduction.
-
-Use contracts/use_case_outputs.json UC02 and UC02 acceptance cases for exact output and test requirements.
+Pass when answered questions make zero Parallel calls, integration failures cannot trigger public replacements, and every exception has a specific question and source evidence. Review necessity, hours, repair procedures and approval remain with existing methods. Measure additional supported answers and reviewer effort, not time spent duplicating a source already available.

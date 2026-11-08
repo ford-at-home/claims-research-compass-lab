@@ -38,3 +38,4 @@ use the editor.
 - Money and distances use `decimal.js` helpers in `src/lib/claims/calc.ts`; unknown components return null.
 - Shared workflow introductions live in a presentation-only component keyed by CaseId; proposed process diagrams never imply a live connection or completed research.
 - All primary runs use baseline adapters before any research configuration; external server actions verify owned stored baseline, matching input hash and an explicit unanswered question. Rental competitor benchmarking is separate from supplier pricing and switching scenarios.
+- Canonical prompts and fixture amounts feed host adapters without editing source bytes; rental structured Task output requires validated benchmark purpose and comparison terms, because generic findings cannot express quote comparability safely.

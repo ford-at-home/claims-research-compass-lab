@@ -17,7 +17,7 @@ import { rentalExceptionEligibility } from "./rental";
 import { readLiveBaseline } from "./baseline.server";
 import { researchGate, researchIntentSchema, incrementalMetrics } from "./baseline";
 import { incrementalPrompt } from "./incremental";
-import { benchmarkPrompt, competitorBenchmarkContext, competitorQuoteSchema, compareCompetitorQuotes } from "./rental-benchmark";
+import { benchmarkPrompt, competitorBenchmarkContext, competitorTaskJsonSchema, competitorTaskOutputSchema, compareCompetitorQuotes } from "./rental-benchmark";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const caseIdSchema = z.enum(["UC01", "UC02", "UC03", "UC04", "UC05"]);
@@ -66,7 +66,7 @@ function failRun(rec: RunRecord, e: unknown) {
 
 const liveInput = z.object({ caseId: caseIdSchema, input: z.any(), precisePoint: z.boolean().optional(), intent: researchIntentSchema.optional(), baselineId: z.string().optional() });
 
-/** UC03 is supplier-only; UC01, UC02, UC04 retain their research paths. */
+/** Every primary path is adapter-only; external paths require an explicit gated question. */
 export const startLiveRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => liveInput.parse(d))
@@ -89,7 +89,7 @@ export const startLiveRun = createServerFn({ method: "POST" })
     rec.result = { scope_version: "baseline-first-v2", research_intent: data.intent, baseline_snapshot: baseline, baseline_id: data.baselineId, baseline_coverage: baseline.result["baseline_coverage"] ?? [] };
     rec.status = "running";
     rec.steps = ["Validate & public context", "Search", "Extract", "Task create", "Poll result", "Normalize & calculate"].map((name) => ({ name, status: "pending" as const }));
-    const step = (i: number, s: "done" | "error" | "skipped") => { rec.steps[i]!.status = s; };
+    const step = (i: number, s: "done" | "error" | "skipped") => { const item = rec.steps[i]; if (item) item.status = s; };
     const trace = (t: Omit<TraceEntry, "at">) => rec.trace.push(R({ at: nowIso(), ...t }));
     try {
       getKey();
@@ -146,19 +146,17 @@ export const startLiveRun = createServerFn({ method: "POST" })
       const t = structuredClone(TASK_TEMPLATES[caseId]);
       t.processor = caseId === "UC03" ? "pro" : process.env["PARALLEL_TASK_PROCESSOR"] || t.processor || "core";
       t.input.research_instructions = caseId === "UC03" ? benchmarkPrompt(data.intent.question) : incrementalPrompt(caseId, data.intent.question);
-      if (caseId === "UC03") t.task_spec.output_schema = { type: "json", json_schema: {
-        type: "object", required: ["quotes"], additionalProperties: false, properties: { quotes: { type: "array", items: {
-          type: "object", additionalProperties: false, required: Object.keys(competitorQuoteSchema.shape), properties: Object.fromEntries(Object.entries(competitorQuoteSchema.shape).map(([key]) => [key, key === "supported_terms" ? { type: "array", items: { type: "string" } } : ["supplier_identity_verified", "all_required_fees_known"].includes(key) ? { type: "boolean" } : ["days", "seats"].includes(key) ? { type: ["number", "null"] } : { type: key === "supplier" ? "string" : ["string", "null"] }]))
-        } } }
-      } };
+      if (caseId === "UC03") t.task_spec.output_schema = { type: "json", json_schema: competitorTaskJsonSchema };
       t.input.public_case_context = pub.context;
+      t.input.research_scope = { specific_question: data.intent.question, primary_response_public_summary: null, purpose: caseId === "UC03" ? "competitor_market_benchmark" : "unanswered_external_question", execute_only_after_local_gate: true };
       t.input.discovered_source_excerpts = excerpts.slice(0, 12).map((x) => ({ ...x, excerpts: (x.excerpts ?? []).slice(0, 3).map((s: string) => String(s).slice(0, 1500)) }));
       if (containsCanary(t)) throw new Error("Outbound request contained private canary; aborted");
       rec.calls.task++;
       trace({ op: "POST /v1/tasks/runs", transport: "http", status: "ok", request: { ...t, task_spec: { output_schema: { type: "json", json_schema: "[schema object from template]" } } } });
       const tres: any = await parallelRequest("POST", "/v1/tasks/runs", t, { idempotent: false });
       rec.provider_ids["task_run_id"] = tres.run_id;
-      rec.trace[rec.trace.length - 1]!.response = { run_id: tres.run_id, status: tres.status };
+      const lastTrace = rec.trace[rec.trace.length - 1];
+      if (lastTrace) lastTrace.response = { run_id: tres.run_id, status: tres.status };
       step(3, "done");
     } catch (e) {
       failRun(rec, e);
@@ -188,8 +186,10 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
         const captured = nowIso();
         rec.facts = normalizeTaskOutput(res?.output, captured);
         if (rec.case_id === "UC03") {
-          const raw = Array.isArray(res?.output?.content?.quotes) ? res.output.content.quotes : [];
-          const quotes = raw.flatMap((q: unknown) => { const parsed = competitorQuoteSchema.safeParse(q); return parsed.success ? [parsed.data] : []; });
+          const output = competitorTaskOutputSchema.safeParse(res?.output?.content);
+          if (!output.success) throw new ParallelError("schema", null, "Rental Task output must include benchmark_purpose=competitor_market_benchmark and valid quote records.");
+          const quotes = output.data.quotes;
+          rec.result["benchmark_purpose"] = output.data.benchmark_purpose;
           const baseline = rec.result["baseline_snapshot"] as RunRecord;
           const comparisons = compareCompetitorQuotes(baseline, quotes, captured);
           rec.result["competitor_comparisons"] = comparisons;
@@ -212,7 +212,7 @@ export const resumeLiveRun = createServerFn({ method: "POST" })
     } catch (e) {
       // Leave status running so the user can Resume; record the error visibly.
       rec.trace.push(R({ at: nowIso(), op: "poll", transport: "http" as const, status: "error" as const, note: (e as Error).message }));
-      if (e instanceof ParallelError && ["auth", "credit_or_access", "config"].includes(e.kind)) failRun(rec, e);
+      if (e instanceof ParallelError && ["auth", "credit_or_access", "config", "schema"].includes(e.kind)) failRun(rec, e);
     }
     await saveRun(context.supabase, context.userId, rec, data.dbId);
     return rec;

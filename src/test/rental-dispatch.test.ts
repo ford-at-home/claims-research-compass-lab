@@ -28,6 +28,11 @@ describe("UC03 server dispatch", () => {
     expect(calls.map((c) => c[1])).toEqual(["/v1/search", "/v1/tasks/runs"]);
     expect(JSON.stringify(calls)).not.toContain("50.00");
     expect(JSON.stringify(calls)).toContain("DIFFERENT suppliers");
+    const task = calls.find((c) => c[1] === "/v1/tasks/runs")?.[2] as { task_spec: { output_schema: { json_schema: { required: string[]; properties: { benchmark_purpose: { enum: string[] } } } } }; input: { public_case_context: { benchmark_purpose: string }; research_scope: { specific_question: string } } };
+    expect(task.task_spec.output_schema.json_schema.required).toContain("benchmark_purpose");
+    expect(task.task_spec.output_schema.json_schema.properties.benchmark_purpose.enum).toEqual(["competitor_market_benchmark"]);
+    expect(task.input.public_case_context.benchmark_purpose).toBe("competitor_market_benchmark");
+    expect(task.input.research_scope.specific_question).toBe("Competitor prices same area");
     expect(r.provider_ids["task_run_id"]).toBe("competitor-task");
     key.mockReset(); key.mockImplementation(() => { throw new Error("Parallel must not be reached"); }); request.mockReset();
   });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { dec, resolveRentalWindow, times } from "./calc";
 import type { Mode, RunRecord } from "./types";
+import canonicalRental from "../../../specifications/parallel-claims/fixtures/UC03_rental_extensions.input.json";
 
 export const rentalScenarioSchema = z.object({
   case_id: z.literal("UC03"),
@@ -14,7 +15,7 @@ export const rentalScenarioSchema = z.object({
     seats_needed: z.number().int().positive(),
     repair_status: z.object({ remaining_days: z.number().int().nonnegative().nullable(), origin: z.literal("mock_enterprise") }),
     insurer_rules: z.object({ rule_version: z.string(), max_review_days: z.number().int().positive().nullable(), origin: z.literal("simulated_fixture") }),
-    supplier_fixture: z.object({ daily_all_in_usd: z.string().nullable(), supplier_identity: z.string().nullable().optional(), response_status: z.enum(["ok", "error", "incomplete"]) }),
+    supplier_fixture: z.object({ daily_all_in_usd: z.string().nullable(), supplier_identity: z.string().nullable().optional(), excluded_supplier_groups: z.array(z.string()).optional(), rate_basis: z.string().optional(), response_status: z.enum(["ok", "error", "incomplete"]) }),
     switching_cost_usd: z.string().nullable().optional(),
   }),
 });
@@ -29,12 +30,12 @@ export const RENTAL_CAPABILITIES = {
 export const RENTAL_SAMPLE: RentalScenario = {
   case_id: "UC03", data_origin: "synthetic",
   input: {
-    location: { zip: "23220", state: "VA", timezone: "America/New_York" },
-    branch_reference: null, pickup_offset_days: 1, requested_days: 3, vehicle_class: "midsize", seats_needed: 5,
-    repair_status: { remaining_days: 3, origin: "mock_enterprise" },
+    location: canonicalRental.input.location,
+    branch_reference: null, pickup_offset_days: canonicalRental.input.pickup_offset_days, requested_days: canonicalRental.input.requested_days, vehicle_class: canonicalRental.input.vehicle_class, seats_needed: canonicalRental.input.seats_needed,
+    repair_status: { remaining_days: canonicalRental.input.repair_status.remaining_days, origin: "mock_enterprise" },
     insurer_rules: { rule_version: "simulation-v1", max_review_days: null, origin: "simulated_fixture" },
-    supplier_fixture: { daily_all_in_usd: "50.00", supplier_identity: "SIMULATED integrated supplier", response_status: "ok" },
-    switching_cost_usd: null,
+    supplier_fixture: { daily_all_in_usd: canonicalRental.input.existing_extension.daily_all_in_usd, supplier_identity: "SIMULATED integrated supplier", excluded_supplier_groups: canonicalRental.input.existing_supplier.group_ids, rate_basis: canonicalRental.input.existing_supplier.rate_basis, response_status: "ok" },
+    switching_cost_usd: canonicalRental.input.transfer_cost_usd,
   },
 };
 
@@ -93,7 +94,7 @@ export function runRentalBaseline(wrapper: unknown, inputHash: string, mode: Mod
       { ...baseFact, fact_id: "f-supplier-daily", entity_id: "supplier", attribute: "supplier_daily_all_in_rate", origin: isSim ? "simulated_fixture" : "licensed_source", status: isSim ? "simulated" : "supported", evidence_type: "supplier_quote", number_decimal: daily, unit: "USD per day", citations: [{ source_ref: response.source_ref, url: null, excerpt: response.excerpt }] },
       { ...baseFact, fact_id: "calc-supplier-total", entity_id: "supplier", attribute: "requested_duration_cost", origin: "calculation", status: isSim ? "simulated" : "supported", evidence_type: "other", number_decimal: total, unit: "USD", citations: [], formula: `${daily} * ${input.requested_days}`, input_fact_ids: ["f-supplier-daily"] },
     ];
-    run.result = { ...run.result, supplier_pricing: { daily_all_in_usd: daily, total_usd: total, origin: response.origin }, availability: null, extension_confirmed: null, reservation: null,
+    run.result = { ...run.result, supplier_pricing: { daily_all_in_usd: daily, total_usd: total, origin: response.origin, rate_basis: isSim ? input.supplier_fixture.rate_basis ?? "simulated_supplier_agreement" : "supplier_agreement" }, availability: null, extension_confirmed: null, reservation: null,
       repair_context: input.repair_status, insurer_rules: input.insurer_rules,
       local_review: { requested_days: input.requested_days, repair_remaining_days: input.repair_status.remaining_days, within_rule_limit: input.insurer_rules.max_review_days === null ? null : input.requested_days <= input.insurer_rules.max_review_days, matches_repair_timing: input.repair_status.remaining_days === null ? null : input.requested_days === input.repair_status.remaining_days, decision: "reviewer_required" },
     };
