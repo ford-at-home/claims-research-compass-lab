@@ -1,0 +1,38 @@
+{
+  "spec_revision": "2026-11-08-existing-systems-first",
+  "primary_response_required": true,
+  "default_parallel_calls": 0,
+  "decisions": [
+    {
+      "condition": "primary response answers this question",
+      "action": "use_primary_response",
+      "parallel_allowed": false
+    },
+    {
+      "condition": "primary integration failed",
+      "action": "surface_integration_error",
+      "parallel_allowed": false
+    },
+    {
+      "condition": "explicit external question or requested independent benchmark is not answered by primary response",
+      "action": "research_only_that_question",
+      "parallel_allowed": true
+    }
+  ],
+  "required_before_parallel": [
+    "explicit_research_action",
+    "specific_question",
+    "primary_response_reference",
+    "gap_or_benchmark_purpose",
+    "requested_attributes",
+    "source_and_comparison_context"
+  ],
+  "forbidden": [
+    "automatic web substitution after an integration error",
+    "invented insurer systems or provider names",
+    "claiming a gap without checking baseline coverage",
+    "re-querying the integrated rental supplier for confirmed prices"
+  ],
+  "confirmed_user_fact": "The insurer already has a rental supplier integration providing supplier-confirmed pricing.",
+  "other_system_details": "Not verified in this specification. Confirm interface names and actual coverage before connecting."
+}

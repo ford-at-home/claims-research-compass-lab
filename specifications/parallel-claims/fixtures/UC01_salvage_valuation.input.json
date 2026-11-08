@@ -28,5 +28,18 @@
       "transport_usd": "140.00",
       "origin": "mock_enterprise"
     }
+  },
+  "primary_system": {
+    "role": "existing valuation and salvage tools",
+    "origin": "mock_enterprise",
+    "actual_insurer_interface": "not_provided",
+    "coverage_to_confirm": true
+  },
+  "research_request": {
+    "requested": false,
+    "question": "A specifically identified missing comparable or an explicitly requested outside market comparison.",
+    "purpose": "candidate_external_question",
+    "primary_answer_status": "not_checked",
+    "gap_status": "hypothesis_to_validate"
   }
 }

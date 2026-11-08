@@ -30,10 +30,11 @@
     "fields": {
       "resolved_window": "Exact local pickup/return dates and times used for the run.",
       "existing_option": "Internal mock or actual confirmed extension data with origin preserved.",
-      "alternative_quotes": "Quote facts with exact branch, class, dates, fees, timestamp and confirmation basis.",
-      "scenario_totals": "Known full totals using supported components; missing components yield null totals.",
+      "alternative_quotes": "Different-supplier competitor quotes for matched rental context; each retains public retail or other rate basis.",
+      "scenario_totals": "Base rental benchmark totals and deltas. Transfer or switching costs appear only in a separate scenario.",
       "suitability": "Explicit class/seating/access comparisons, with unknowns.",
-      "next_action": "review_existing, confirm_supplier, or insufficient_evidence."
+      "next_action": "review_benchmark, retain_primary_response, or insufficient_evidence. No reservation action.",
+      "benchmark_purpose": "competitor_market_benchmark"
     },
     "required_common_contract": "schemas/demo_run.schema.json",
     "output_schema_file": "schemas/UC03_result.schema.json"

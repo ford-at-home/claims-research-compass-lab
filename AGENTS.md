@@ -30,7 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Preserve the imported source package except user-authorized UC03 scope amendments; retain the original integrity manifest and record amendments separately in `specifications/STACK_ADAPTATION.md`.
+- Preserve exact user-authorized revision bytes under `specifications/parallel-claims/` and verify them through `SOURCE_REVISION_MANIFEST.json`; retain the original failed import manifest as history, because revision verification does not resolve the original archive mismatch.
 - Parallel API calls and the API key stay in server-only modules (`*.server.ts`, server function handlers); the key is never returned, logged or exported.
 - Live research server functions require `requireSupabaseAuth`; runs are stored in `research_runs` owned by the user (RLS), so visitors cannot spend credits.
 - Fixture, Live and Replay are separate code paths; Replay only renders stored completed live runs, never fixture data.

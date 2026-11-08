@@ -25,7 +25,12 @@
         "auction-B"
       ],
       "settlement_value": null
-    }
+    },
+    "primary_workflow": {
+      "status": "answered_in_simulated_primary_system",
+      "parallel_calls": 0
+    },
+    "external_research_requires_explicit_action": true
   },
   "UC02": {
     "observations": [
@@ -57,7 +62,12 @@
         "aftermarket-B",
         "OEM-C"
       ]
-    }
+    },
+    "primary_workflow": {
+      "status": "answered_in_simulated_primary_system",
+      "parallel_calls": 0
+    },
+    "external_research_requires_explicit_action": true
   },
   "UC03": {
     "observations": [
@@ -66,15 +76,29 @@
         "daily_usd": "45.00",
         "days": 3,
         "mandatory_fees_usd": "18.00",
-        "availability": "advertised_only"
+        "availability": "advertised_only",
+        "provider_id": "mock_competitor_a",
+        "provider_name": "Simulated competitor A",
+        "rate_basis": "simulated_public_retail"
       }
     ],
     "expected": {
-      "existing_total_usd": "150.00",
-      "alternative_including_transfer_usd": "188.00",
-      "formula": "45.00 * 3 + 18.00 + 35.00",
-      "supplier_confirmation_required": true
-    }
+      "existing_supplier_total_usd": "150.00",
+      "competitor_base_rental_total_usd": "153.00",
+      "benchmark_delta_usd": "3.00",
+      "benchmark_delta_percent": "2.00",
+      "benchmark_formula": "45.00 * 3 + 18.00 = 153.00; 153.00 - 150.00 = 3.00",
+      "separate_switching_scenario_total_usd": "188.00",
+      "supplier_price_source": "simulated_existing_integration",
+      "competitor_quote_origin": "simulated_fixture",
+      "availability": "advertised_only",
+      "automatic_booking": false
+    },
+    "primary_workflow": {
+      "status": "answered_in_simulated_primary_system",
+      "parallel_calls": 0
+    },
+    "external_research_requires_explicit_action": true
   },
   "UC04": {
     "observations": [
@@ -101,7 +125,12 @@
       "assessment": "corroborating",
       "vehicle_damage_proven": false,
       "warning_is_observation": false
-    }
+    },
+    "primary_workflow": {
+      "status": "answered_in_simulated_primary_system",
+      "parallel_calls": 0
+    },
+    "external_research_requires_explicit_action": true
   },
   "UC05": {
     "observations": [
@@ -116,6 +145,11 @@
       "internal_context_origin": "mock_enterprise",
       "delay_causation": "not_established",
       "sources_origin": "simulated_fixture"
-    }
+    },
+    "primary_workflow": {
+      "status": "answered_in_simulated_primary_system",
+      "parallel_calls": 0
+    },
+    "external_research_requires_explicit_action": true
   }
 }

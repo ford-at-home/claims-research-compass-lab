@@ -1,6 +1,6 @@
 {
   "mode": "basic",
-  "objective": "Research public manufacturer notices and authoritative repair guidance for the supplied vehicle family. Identify supported statements, contradictions and gaps. Do not infer that a recall or notice caused an internal repair delay. Do not include private identifiers or internal counts in outbound research.",
+  "objective": "Use internal enterprise tools first. Research only the stated external question that those tools do not answer. Do not reconstruct private company facts through public search or infer internal repair-delay causation from a public notice. Join outside evidence to internal context inside the host.",
   "search_queries": [
     "Toyota Camry manufacturer repair notices",
     "Toyota Camry official parts repair guidance"

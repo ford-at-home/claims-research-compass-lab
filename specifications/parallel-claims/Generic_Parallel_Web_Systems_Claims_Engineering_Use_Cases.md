@@ -1,23 +1,25 @@
 # Generic Parallel Web Systems Claims Engineering Use Cases
 
 Demo specifications and implementation package
-7 November 2026
+Revised 8 November 2026
 
-[Inference] These are proposed engineering designs for five demonstrations. All supplied claim inputs and offline observations are simulated. Product interfaces are documented in the source register. No live research results, insurer integrations, savings, or claim outcomes are asserted.
+[Inference] Proposed incremental research demos around existing claims capabilities. The user confirmed an existing rental supplier pricing integration. Actual interface names and coverage for other insurer systems remain to be confirmed; the examples below are candidate experiments, not verified deficiencies. All supplied case and offline data remain simulated.
 
-Build one generic demo suite with five use case screens and a shared evidence viewer. The only required external secret for live research is PARALLEL_API_KEY, supplied to the server environment. Use mock enterprise data for the demonstrations and keep insurer names out of the interface and outputs.
+Start with the existing system response. Invoke Parallel only for a specific unanswered external question or an explicitly requested independent market benchmark. Routine primary workflows make zero Parallel calls. Rental research compares outside competitor rates with the existing supplier quote; it does not recreate supplier pricing.
 
-| ID | Demo | Visible result |
+| ID | Existing capability baseline | Candidate Parallel question |
 | --- | --- | --- |
-| UC01 | Salvage valuation | Separate vehicle value and damaged recovery evidence |
-| UC02 | Damage estimate verification | Line by line fitment and price findings |
-| UC03 | Rental supplier integration baseline | Supplier pricing, local rules and repair timing for reviewer evidence |
-| UC04 | Loss verification | Event timeline and geographic match evidence |
-| UC05 | War room research with MCP | Cited brief and trace across two MCP servers |
+| UC01 | existing valuation and salvage tools | A specifically identified missing comparable or an explicitly requested outside market comparison. |
+| UC02 | existing estimating parts labor and repair sources | A defined part availability, repair guidance or other exception not answered by the existing sources. |
+| UC03 | existing rental supplier integration | Competitor rates from different suppliers in the same area for the same dates, class and rental terms. |
+| UC04 | existing weather catastrophe and incident sources | A specific missing local corroboration question after the existing source response is examined. |
+| UC05 | existing enterprise systems and tools | A genuinely external vendor, public documentation or incident question that internal tools cannot answer. |
+
+A candidate is dropped when existing data already answers it. Evaluate additional supported findings and reviewer effort against that baseline. Do not attribute routine integration benefits to Parallel.
 
 ### Implementation approach
 
-Proposed stack: Python, a Streamlit interface, a background research worker, and SQLite for run metadata and review records. Use Parallel HTTP APIs for UC01, UC02 and UC04. UC03 ordinary requests use the existing supplier integration and make zero Parallel calls. Use an MCP client connected to a local mock enterprise MCP server and Parallel MCP for UC05. Fixed workflow steps avoid a second model API key.
+Proposed stack: Python, a Streamlit interface, a background research worker, and SQLite for run metadata and review records. Use Parallel HTTP APIs for UC01 through UC04. Use an MCP client connected to a local mock enterprise MCP server and Parallel MCP for UC05. Fixed workflow steps avoid a second model API key.
 
 ### Package contents
 
@@ -27,7 +29,7 @@ The developer Markdown, five JSON input scenarios, research prompts, provider re
 
 ### Environment and secrets
 
-Read PARALLEL_API_KEY only in the Python service. Do not put it in client code, browser storage, request traces, exports, screenshots, or fixture files. Configuration status may report configured or missing. It must not return the key or a prefix of it. A missing key blocks live execution and leaves the chosen mode unchanged.
+Read PARALLEL_API_KEY only in the Python service. Do not put it in client code, browser storage, request traces, exports, screenshots, or fixture files. Configuration status may report configured or missing. It must not return the key or a prefix of it. A missing key blocks external live research; it does not block the existing primary integration path or change the selected mode.
 
 ```python
 import os
@@ -47,7 +49,7 @@ Switching mode requires an explicit user action. Live failures stay visible. A f
 
 ### Screen and presenter controls
 
-- A suite index opens the five screens. Each screen provides a sample scenario, editable public research inputs, mode selector, Run research, and run history.
+- A suite index opens the five screens. Each screen provides a sample scenario, baseline response, explicit research question, mode selector, Load baseline, Research gap or Benchmark competitor rates, and run history.
 - A progress panel shows planned steps, completed calls, elapsed time, source counts, and any reported usage. Research may continue in the background while the interface remains usable.
 - A findings table opens an evidence drawer with the exact source excerpt, URL, dates, qualifiers and origin. Tabs show Sources, Calculations, Redacted trace and Review.
 - Review actions accept evidence, reject evidence or request further research. Store these locally. Export JSON and a readable report with origins and citations preserved.
@@ -69,10 +71,10 @@ HTTP examples use https://api.parallel.ai with x-api-key. Search requires search
 
 ### Fixed execution plan
 
-1. Validate inputs, resolve relative dates, compute the input hash, and display the call plan. Reject unresolved rental dates before any quote request.
+1. Load and validate the existing system response first. If it answers the question, return it with zero Parallel calls. Require an explicit uncovered question or requested competitor benchmark before the external call plan. Resolve rental dates before any outside quote request.
 2. Create an allowlisted public context. Keep claim IDs, identities, internal prices, policy terms, private notes and enterprise credentials local.
 3. Search and fetch within the selected case budget. Reuse the actual returned session_id for related Search and Extract calls. Preserve access failures per URL.
-4. Submit at most one Task for the structured research step. Add retrieved source excerpts to its context. The Task may perform further research; its own search work is not included in the host Search call count.
+4. Only after the local research gate permits the explicit question, submit at most one Task for the structured research step. Add retrieved source excerpts to its context. The Task may perform further research; its own search work is not included in the host Search call count.
 5. Persist the returned provider run ID immediately. Retrieve its result using short waits, then validate the content and Basis. Normalize facts and run calculations locally.
 6. Render the result, coverage gaps, provenance and review controls. Keep the original input hash and provider output with the run.
 
@@ -104,148 +106,120 @@ Use supported or simulated facts in calculations as appropriate to the selected 
 
 ## 4 UC01 Salvage valuation
 
-### User story and scenario
+### Existing capability baseline
 
-A total loss specialist wants current vehicle and damaged salvage comparisons with reviewable sources. Use the hypothetical 2018 Camry in fixtures/UC01_salvage_valuation.input.json. Its mileage, location, condition and fees are simulated inputs.
+Use the vehicle valuation and salvage outputs already in the claims workflow. The exact insurer vendors, valuation method and data coverage have not been supplied here. The demo uses a named mock adapter and does not imply that these basic capabilities are absent.
 
-### Visible experience
+### Candidate external question
 
-The screen has separate Vehicle market evidence, Damaged salvage evidence and Recall context tabs. Tables show vehicle attributes, mileage, location, price basis, sale status, sale date and citations. A candidate drawer explains inclusion or exclusion. A range is shown only when a documented comparison method and adequate supported observations exist; the base demo returns research only.
+A reviewer identifies a specific comparable or market question that the existing sources do not answer. Possible experiments include an unusual vehicle configuration or a requested independent regional market comparison. These are hypotheses to check against actual feed coverage, not known gaps.
 
-### Parallel workflow
+### Workflow
 
-1. Search retail listing and salvage auction candidates. Extract the vehicle attributes and price semantics; deduplicate by vehicle or lot identity.
-2. Use the case Task prompt to return atomic price, status and qualifier findings. Reject wrong model, trim, damage, title or date context for the comparison being made.
-3. Use public model recall evidence as context. A VIN specific lookup requires a separately approved access route. Do not present model campaigns as VIN repair history.
-4. Compute any permitted net recovery example from a supported completed sale and explicit required deductions. Preserve gross sale and deductions as separate facts.
+1. Load the existing valuation/salvage response and identify the precise unanswered question. An answered question returns the baseline without Parallel.
+2. On explicit research request, search only for evidence relevant to that question. Keep retail asks, completed damaged sales, bids, dates, condition and title qualifiers separate.
+3. Present baseline facts beside genuinely additional evidence, excluded candidates and coverage gaps. Keep insurer valuation methods and specialist judgment authoritative.
 
-### What the presenter demonstrates
+### Presenter and acceptance
 
-In fixture mode, show a simulated retail ask of $14,500, a completed damaged sale of $2,450 and an active bid of $2,800. The bid stays out of the completed sale comparison. With simulated auction and transport deductions of $220 and $140, the net example is $2,090. This is a fabricated arithmetic scenario, not a vehicle valuation.
+Show an ordinary mock case resolved from the primary tools with zero Parallel calls, then select an explicit exception scenario. The existing fabricated ask, bid and completed-sale observations demonstrate evidence distinctions only. The $2,090 net example remains a labeled fixture calculation and is not a valuation recommendation.
 
-### Acceptance and real data boundary
-
-Pass when asks, bids and final sales remain distinct, every external amount opens its evidence, duplicate candidates are excluded, and missing completed sale data produces insufficient evidence. Completed auction results may require licensed access; do not replace them with asking prices. NHTSA recall lookup has scope exclusions, including repaired recalls. [D1, D2]
-
-Use contracts/use_case_outputs.json UC01 for the output fields. Research quality and review time are measured later; this demo does not establish faster total loss decisions.
+Pass when the primary response is used first, a specific research question is recorded, public observations cannot silently override authoritative values, and the demo reports what the research added. An integration error stays an integration error. Completed sold data access and recall scope still need appropriate source handling. [D1, D2]
 
 ## 5 UC02 Damage estimate verification
 
-### User story and scenario
+### Existing capability baseline
 
-A damage reviewer checks a part, local labor rate and shop details before making an estimate decision. Use the hypothetical Camry estimate in fixtures/UC02_damage_estimates.input.json. A missing part number triggers candidate identification and fitment review; it is not an assumed exact match.
+Use the estimating system, parts and labor sources, repair information and vendor data already in the review workflow. Their exact interfaces and coverage must be confirmed before connecting; do not present normal estimating capabilities as missing.
 
-### Visible experience
+### Candidate external question
 
-Upload or edit estimate lines. Show the original line beside researched candidates, part condition, fitment evidence, stock basis, fees and comparable total. The reviewer can expand Match reasoning, Labor evidence and Shop details. A lower headline price is shown separately from its comparable full cost.
+Research an explicitly unresolved exception or requested independent comparison. Potential experiments include availability for an unusual part or a public manufacturer statement not represented in the response being reviewed. First check whether existing licensed or vendor data already answers the question.
 
-### Parallel workflow
+### Workflow
 
-1. Search OEM, dealer, supplier and recycler pages by vehicle and part identity. Extract exact identifiers, left or right side, trim/options, condition, price, quantity basis, shipping, core charges and stock statements.
-2. Research posted labor rates for the same repair discipline, geography and effective period. Keep sample coverage and methodology. Mechanic wages, national averages and negotiated insurer rates are different categories.
-3. Check shop identity and published certifications using shop or certifier sources. Do not search the fabricated shop name in the seed as if it were a real business; select a real public shop for a live identity check.
-4. Use Task findings and optional Decisions classification for a narrow published certification fact. Locally calculate comparable totals and differences only after fitment and terms are resolved.
+1. Load the estimate and relevant existing source response. Mark which attributes are answered, unresolved or unavailable. A routine answered line causes zero Parallel calls.
+2. For an approved external question, use the exact vehicle, part, condition, options and dates. Retrieve supporting source statements instead of re-running every routine price and labor lookup.
+3. Show only the incremental facts beside the existing answer. Calculate a delta only when identity and terms are comparable. Keep conflicting information and missing cost components visible.
 
-### What the presenter demonstrates
+### Presenter and acceptance
 
-The offline case estimates $420 for a simulated headlamp. One simulated exact OEM candidate is $395 plus $25 shipping, also $420. An aftermarket item at $160 and an unavailable OEM item at $310 are excluded from that comparison. The comparable delta is $0. Local labor evidence remains insufficient in the fixture.
+Demonstrate a normal estimate line answered by the mock estimating adapter, then an explicitly selected exception. The labeled $395 plus $25 shipping fixture remains $420; it demonstrates why headline prices alone are insufficient. It does not imply that the insurer lacks parts pricing.
 
-### Acceptance and review boundary
+Pass when answered questions make zero Parallel calls, integration failures cannot trigger public replacements, and every exception has a specific question and source evidence. Review necessity, hours, repair procedures and approval remain with existing methods. Measure additional supported answers and reviewer effort, not time spent duplicating a source already available.
 
-Pass when wrong part condition, missing fitment, unavailable stock and missing cost components remain visible; unmatched items cannot become price reduction findings. Every computed difference lists its evidence inputs and formula. Repair necessity, labor hours, repair procedures and estimate approval remain outside the demo. There is no claimed supplement reduction.
+## 6 UC03 Rental competitor rate benchmark
 
-Use contracts/use_case_outputs.json UC02 and UC02 acceptance cases for exact output and test requirements.
+### Confirmed existing capability
 
-## 6 UC03 Rental supplier integration baseline
+The insurer already has a rental supplier integration providing supplier-confirmed pricing. Read that quote from the existing adapter. Do not use Parallel to obtain or verify the same supplier price. The demo adapter remains explicitly simulated until an actual interface contract is provided.
 
-### User story and scenario
+### Requested external question
 
-User-authorized correction, November 8, 2026: the insurer already has a rental supplier integration. Supplier-confirmed pricing belongs to that integration, not open-web research. Pricing is confirmed as a capability; availability, inventory, reservation and extension fields remain unverified. No real supplier interface contract, endpoint or credential has been supplied to this project.
+What do different rental suppliers in the same area quote for the same dates and vehicle requirements, and how do those public market quotes compare with the existing integrated supplier rate? This competitor benchmark is the Parallel task.
 
-An associate reviews supplier pricing with local insurer rules and repair timing. The synthetic sample has three requested days, midsize class, five seats and simulated repair context. Resolve dates locally; unknown branch reference and insurer rules stay unknown.
+### Workflow
 
-### Visible experience
+1. Load the integrated supplier quote. Resolve dates, times, duration, area, currency, class, seating and fee context. The ordinary supplier lookup makes zero Parallel calls.
+2. When the reviewer selects Benchmark competitor rates, research different suppliers and exclude the integrated supplier and any known same-group providers. Do not send private account terms or internal claim data outside.
+3. Capture actual retrievable quotes, mandatory fees, rate basis, quote time and availability/confirmation basis. A public retail quote stays labeled as a public retail quote; missing or incomparable offers stay unknown or excluded.
+4. Compute complete base rental totals and deltas for matching contexts. Keep switching and transfer costs in a separate decision scenario. Return sources and terms for reviewer interpretation, without changing a reservation.
 
-Show supplier integration -> local insurer rules and repair timing -> reviewer evidence. Label UC03 as the supplier integration baseline, not a Parallel value claim. Fixture supplier prices and local context remain explicitly simulated. Live exposes an unconfigured supplier adapter until the actual contract is provided. Display only known interface fields; keep unverified availability, reservation and extension confirmation null. Remove the public-rental-versus-contract-rate comparison.
+### Presenter and acceptance
 
-### Ordinary supplier workflow — zero Parallel calls
+The fixture supplier quote is $150 for three days. A simulated different supplier quotes $45 per day plus $18 mandatory fees, totaling $153. The base benchmark delta is $3 or 2 percent. A $35 transfer cost yields a separate $188 switching scenario. Every value here is fabricated and labeled.
 
-1. Validate the scenario and obtain authoritative pricing through the supplier adapter. Do not use fixture response fields in Live.
-2. Combine returned supplier data with local insurer rules and repair timing; retain origin and provenance.
-3. Calculate complete known costs using decimal-safe helpers, formulas and input fact references. Missing required pricing yields an integration error, never a fabricated amount.
-4. Present evidence to the reviewer. Failed or incomplete supplier responses stay integration errors and never invoke web research or quote fallback. No Search, Extract, Task or MCP calls occur on this path, including resume.
-
-### Optional external exception research
-
-Keep a distinct explicit External exception research action requiring a specific unanswered external question outside the supplier integration's known capabilities. No validated gap is supplied, so eligibility is blocked and no external call is made. Do not invent a need or duplicate supplier price research. Future exception results are advisory and cannot override supplier prices, coverage or reservations.
-
-### What the presenter demonstrates
-
-The mock supplier response is an explicitly simulated all-in $50 per day for three requested days, totaling $150. The calculation stays simulated, and unknown availability and extension confirmation stay null. There is no public alternative price, transfer-cost comparison or savings claim. Local repair context and rules are simulated; no real insurer duration limit is invented.
-
-### Acceptance and real data boundary
-
-Pass when normal requests call the supplier adapter and make zero Parallel calls, supplier failures and missing pricing never trigger Parallel, mock prices stay labeled simulated, and exception eligibility requires an explicit question and separate action. Live remains unconfigured without the actual supplier interface contract. Do not infer insurer integration capabilities from vendor documentation. The executable contract is documented in STACK_ADAPTATION.md; historical imported UC03 research templates, output schema and storyboard alternatives are superseded for ordinary execution. These authorized amendments do not resolve the original import-integrity warning.
-
-The demo may recommend an associate review step. It does not set coverage, authorize rental duration, reserve a car or modify an existing reservation.
+Pass when the integrated supplier remains the pricing source, only explicit competitor research calls Parallel, comparison context and rate basis stay visible, and unavailable quotes are not invented. Competitor advertised availability does not become supplier-confirmed inventory. The comparison is a market benchmark, not proof that unlike rate agreements are equivalent. [D3]
 
 ## 7 UC04 Loss verification
 
-### User story and scenario
+### Existing capability baseline
 
-An associate seeks public event evidence for the date and location of a reported loss. The fixture describes a hypothetical Dallas hail loss on May 26 2024. The date and location are scenario inputs, not an assertion that a damaging event occurred. The supplied UTC offset and timezone must agree.
+Use existing catastrophe, weather, traffic and incident sources before public research. Actual source names and coverage have not been provided. An ordinary loss already covered by the existing response is demonstrated without Parallel calls.
 
-### Visible experience
+### Candidate external question
 
-Show a loss time window, an event timeline, source coverage and a location view. Distinguish observed events, preliminary reports, warnings and forecasts. A drawer shows exact location precision, time basis, intensity, source date and citation. Switchable subcases cover weather, road closures and public incident reports using their own source policies.
+A reviewer identifies a missing corroboration question: for example, a dated local closure notice or public incident detail absent from the source response being reviewed. Validate that the detail is actually missing; do not replace standard weather verification with a generic web search.
 
-### Parallel workflow
+### Workflow
 
-1. Convert the reported local time and uncertainty window to UTC. For the live seed, send ZIP and state by default; precise coordinates require a separate explicit demo setting.
-2. Search official weather sources for events, and transportation or public agency sources for closure/incident subcases. Extract event time, geometry or point, intensity and reporting status.
-3. Perform temporal overlap and distance or area overlap in local code. A ZIP-only result remains an area match. Unknown timezones or coordinates remain unresolved.
-4. Return corroborating, conflicting or insufficient evidence with the searched date, place and source coverage. Keep a warning separate from an observation.
+1. Load the existing source response and normalize the reported time, timezone and location uncertainty. Record the exact unresolved question.
+2. On explicit request, retrieve only relevant public event, closure or incident evidence. Preserve source type, time, geography, publication delay and precision.
+3. Calculate time and geography matches locally. Show what is new relative to the baseline. Keep warnings, forecasts, observations and preliminary reports distinct.
 
-### What the presenter demonstrates
+### Presenter and acceptance
 
-The fabricated offline observation occurs at the same synthetic point and within the loss time window. Its computed point distance is 0 km and its time overlaps. A second fabricated source is a warning without a reported point; it does not become an observed hail event. Corroboration does not establish that a vehicle was damaged.
+Run a baseline-covered fixture with zero external calls, followed by a selected missing-public-detail scenario. The existing 0 km observation and warning remain labeled simulation records demonstrating geography and source distinctions. Neither proves vehicle damage.
 
-### Acceptance and source timing
-
-Pass when timezone boundaries, adjacent areas, coarse locations, warnings and missing reports retain their distinctions. A missing report yields insufficient evidence. The NWS describes a publication delay for Storm Data and the Storm Events Database, so the recent-loss path needs a separately validated recent source. [D4]
-
-Do not classify coverage, fraud, liability or claim clearance. Use the UC04 output contract and both recent and historical event acceptance cases.
+Pass when baseline coverage is checked first, missing public records stay insufficient evidence, and public corroboration is not promoted into a coverage, liability or fraud decision. Historical archive delays remain relevant when choosing a genuinely additional recent source. [D4]
 
 ## 8 UC05 War room research with MCP
 
-### User story and scenario
+### Existing capability baseline
 
-A research lead wants a cited outside brief related to an internal operational question. Use a simulated repair delay context and a public research question about manufacturer notices and repair guidance. A public notice does not establish why an internal repair was delayed.
+Use enterprise systems and available internal tools for company facts. The mock enterprise MCP is a demonstration adapter, not an assertion that an insurer lacks internal tools or has a particular MCP deployment.
 
-### Two actual MCP connections in the demo build
+### Candidate external question
 
-The Python host connects to mock-enterprise over stdio and Parallel over Streamable HTTP. Discover tools on both connections. The mock server exposes get_case_context and get_demo_rules, defined in contracts/mock_enterprise_mcp.json. These are proposed demo tools, not claims about any insurer system. The Parallel connection uses Authorization: Bearer plus PARALLEL_API_KEY. [P8, P9]
+Identify the actual outside question: for example, current public vendor documentation or a published incident statement relevant to an internal investigation. Internal records and public evidence answer different questions. Do not research public sources to reconstruct private operational facts.
 
-1. Call mock-enterprise.get_case_context and get_demo_rules for UC05. Retain the complete mock response inside the host.
-2. Construct the outbound question from question, public_vehicle and region only. Drop the private canary, internal counts and private record identifiers.
-3. Call the discovered Parallel web_search and web_fetch tools. Call web_research for a cited narrative; an optional web_decisions call can check a narrow published fact.
-4. Join the returned outside facts to internal context within the host. Display supported facts, hypotheses, contradictions, open questions and reviewer next actions as separate sections.
+### Workflow
 
-### Visible experience and presenter sequence
+1. Discover and query the mock enterprise MCP tools. If their response answers the question, return it with zero Parallel calls.
+2. For an explicit external question, build the minimum allowlisted context and call actual Parallel MCP tools where supported. Retain a trace of which question required the outside source.
+3. Join outside evidence to internal context in the host. Show supported facts, hypotheses, contradictions and open questions separately. A public notice does not establish internal delay causation.
 
-Show an Internal context panel marked Mock enterprise, a Public question preview, an actual redacted MCP trace, and a cited brief. The presenter opens the outbound preview before running, expands the tool calls, and opens a source supporting one finding. The private canary MOCK_INTERNAL_ONLY_9F must be absent from serialized outbound requests.
+### Presenter and acceptance
 
-### Acceptance and deployment boundary
+Show an internal-only query first, then a selected external documentation question. The private canary MOCK_INTERNAL_ONLY_9F stays out of serialized outbound context. Fixture traces remain labeled simulated; a live MCP label requires actual protocol calls and tool discovery.
 
-Pass when both MCP servers are initialized and tools are discovered, real tool invocations are logged, the canary is absent outside, and sources support the brief. Importing a mock Python object directly does not satisfy this MCP demonstration. In fixture mode all traces and findings remain labeled simulated.
-
-Use the unified Parallel MCP endpoint and selected tools in contracts/parallel_mcp.json. Do not pass enterprise MCP credentials or a private enterprise server to Parallel. web_research returns a cited response when ready; structured background Task work remains a separate API operation. [P8]
+Pass when the internal answer is not redundantly researched, external facts have citations, private context remains internal and connection failures are accurately displayed. Document the actual transport adaptation rather than inventing a deployed enterprise MCP. [P8, P9]
 
 ## 9 Request templates and field mapping
 
 ### Request assembly requirements
 
-requests contains five historical Search requests and five Task body templates. UC03 Search and Task templates are superseded and must not be dispatched for ordinary rentals. Its current scenario contract is supplier-first. For the other cases, load the selected prompt and schema as actual JSON values. Do not send file paths or unresolved placeholders as research context. For UC05, the Task body is an optional API comparison variant; it does not replace the required MCP path.
+requests contains five Search requests and five Task body templates. Load the selected prompt and schema as actual JSON values. Do not send file paths or unresolved placeholders as research context. All request bodies are dormant until contracts/research_gate.json permits an explicit external question. For UC03, fill exact times and exclude the existing supplier; its confirmed price stays in the primary integration. For UC05, the Task body is an optional API comparison variant; it does not replace the required MCP path.
 
 Before submission, remove nonpublic fields and record the resulting outbound context. The fixture claim values are never factual assertions about the web. Add actual Search/Extract results to discovered_source_excerpts, retaining their source and timestamp provenance.
 
@@ -299,12 +273,12 @@ Enforce caps before making a call. Record retries and status checks separately f
 ### Build order and completion criteria
 
 1. Build shared modes, run store, evidence drawer and fixture scenarios. Validate all JSON artifacts.
-2. Wire damage estimates to Search, Extract and structured Task output. Add source validation and deterministic comparisons.
+2. Wire existing-system adapters and research gating first, then connect only the requested external questions to Search, Extract and Task.
 3. Add salvage, rental and loss screens using their separate output contracts and source semantics.
 4. Implement the mock enterprise MCP server and the two connection war room workflow.
 5. Run the acceptance cases and one actual live smoke run per supported path after the key is available. Record missing licensed data as a dependency.
 
-Completion requires a runnable UI, five fixture walkthroughs, live request traces, evidence exports and passing acceptance cases. Claim outcomes and cycle time improvements require a later evaluated pilot. This specification package contains no live smoke run evidence.
+Completion requires a runnable UI, five baseline walkthroughs with zero Parallel calls, explicit incremental research demonstrations, evidence exports and passing acceptance cases. Claim outcomes and cycle time improvements require a later evaluated pilot. This specification package contains no live smoke run evidence.
 
 ## 11 Sources and package guide
 

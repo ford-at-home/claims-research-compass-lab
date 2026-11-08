@@ -9,3 +9,6 @@
 - [x] Add matched competitor-only rental benchmarking and separate switching scenarios.
 - [x] Update all five descriptions, project scope and question-led research prompts.
 - [x] Run baseline, outage, benchmark and provenance checks; verify all five pages.
+- [x] Import source revision batch 1 exactly and verify all 30 supplied file hashes.
+- [ ] Import batch 2 and verify the complete 48-file manifest (awaiting user batch 2).
+- [ ] After batch 2, remove stale rental spec path, reconcile runtime contracts/prompts/fixtures, update warning eligibility and run full relevant checks.

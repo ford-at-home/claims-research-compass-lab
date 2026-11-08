@@ -1,6 +1,6 @@
 {
   "mode": "basic",
-  "objective": "Find official event observations for the supplied loss time window and location. Separate observed events, preliminary reports, warnings and forecasts. Return event time, timezone, location precision, reported magnitude and source publication date. A missing report is insufficient evidence, not evidence of no event. Do not infer vehicle damage, coverage, fraud, or liability.",
+  "objective": "Research only the stated corroboration question not covered by the existing weather, catastrophe or incident response. Do not duplicate routine loss verification. Distinguish observed events, warnings, forecasts, reporting delay, time and location uncertainty. A missing public report is insufficient evidence, not proof of no event or fraud.",
   "search_queries": [
     "Dallas May 26 2024 hail",
     "NWS Dallas hail storm reports",

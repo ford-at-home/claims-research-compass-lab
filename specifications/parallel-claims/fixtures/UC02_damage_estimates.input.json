@@ -36,5 +36,18 @@
       }
     ],
     "required_fitment_options": []
+  },
+  "primary_system": {
+    "role": "existing estimating parts labor and repair sources",
+    "origin": "mock_enterprise",
+    "actual_insurer_interface": "not_provided",
+    "coverage_to_confirm": true
+  },
+  "research_request": {
+    "requested": false,
+    "question": "A defined part availability, repair guidance or other exception not answered by the existing sources.",
+    "purpose": "candidate_external_question",
+    "primary_answer_status": "not_checked",
+    "gap_status": "hypothesis_to_validate"
   }
 }

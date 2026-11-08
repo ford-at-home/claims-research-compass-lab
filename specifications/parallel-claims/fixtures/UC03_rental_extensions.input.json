@@ -22,6 +22,33 @@
       "availability": "simulated_supplier_confirmed",
       "origin": "mock_enterprise"
     },
-    "transfer_cost_usd": "35.00"
+    "transfer_cost_usd": "35.00",
+    "existing_supplier": {
+      "id": "mock_existing_supplier",
+      "name": "Simulated integrated supplier",
+      "group_ids": [],
+      "rate_basis": "simulated_supplier_agreement"
+    },
+    "benchmark_requirements": {
+      "supplier_scope": "different_suppliers_only",
+      "same_area": true,
+      "same_dates_and_times": true,
+      "same_class_and_seating": true,
+      "include_mandatory_fees": true,
+      "exclude_switching_costs_from_base_comparison": true
+    }
+  },
+  "primary_system": {
+    "role": "existing rental supplier integration",
+    "origin": "mock_enterprise",
+    "actual_insurer_interface": "not_provided",
+    "coverage_to_confirm": true
+  },
+  "research_request": {
+    "requested": false,
+    "question": "Competitor rates from different suppliers in the same area for the same dates, class and rental terms.",
+    "purpose": "competitor_market_benchmark",
+    "primary_answer_status": "not_checked",
+    "gap_status": "requested_benchmark"
   }
 }

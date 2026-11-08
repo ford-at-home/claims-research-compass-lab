@@ -1,6 +1,8 @@
 # Stack adaptation (Lovable implementation)
 
-The files under `parallel-claims/` are the recovered source package, except the user-authorized UC03 amendments listed below. This note records how the reference design was adapted.
+The canonical source is transitioning to user-authorized revision `2026-11-08-existing-systems-first`. Batch 1 replaces 30 files with exact supplied UTF-8 bytes; all 30 per-file hashes pass in `SOURCE_REVISION_MANIFEST.json`. Batch 2 and its complete 48-file expected manifest are still pending. The original failed `IMPORT_MANIFEST.json` remains historical evidence; no original archive hash match is claimed. Current UI integrity warnings remain until the complete revision passes. This note records how the reference design was adapted.
+
+The revised source contains 51 specification acceptance cases. That count is not an executed test count or proof of live acceptance. Runtime reconciliation, rental Task `benchmark_purpose`, corrected rental spec path and full checks will be completed after batch 2. The host remains TanStack Start/React/TypeScript with Lovable Cloud, not Python/Streamlit/SQLite. Earlier scope notes below are historical and superseded by the authorized revision and existing all-five baseline-first implementation.
 
 | Reference choice | Lovable implementation |
 | --- | --- |
