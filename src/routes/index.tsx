@@ -43,6 +43,12 @@ function Index() {
             <div className="mt-2 text-xs text-primary">{CAPABILITIES[c.id]}</div>
           </Link>
         ))}
+        <Link to="/lienloop" className="rounded-lg border bg-card p-4 transition-colors hover:border-primary">
+          <div className="font-mono text-xs text-primary">Linked prototype</div>
+          <div className="font-semibold">LienLoop</div>
+          <div className="mt-1 text-sm text-muted-foreground">Original private total-loss desk with six mock systems, human approvals and an audit trail.</div>
+          <div className="mt-2 flex flex-wrap gap-2"><Chip tone="replay">Scripted replay</Chip><Chip tone="sim">Synthetic systems</Chip></div>
+        </Link>
       </div>
       <section className="border-y py-4 text-sm"><h2 className="font-semibold">Connection capability boundaries</h2><p className="mt-2">Selected-item Tasks and interactive Responses use the saved connection. Task Groups, Place Search, Decisions and Parallel MCP are not exposed by this connection; compatible HTTP adaptations are explicitly labeled, never presented as those APIs. Monitor bodies are previews only.</p><p className="mt-2 text-muted-foreground">FindAll, Memory and licensed data connectors are optional future extensions, not assumed insurer capabilities. No earlier Python-session captures have been imported.</p></section>
       <div className="grid gap-4 md:grid-cols-2">
