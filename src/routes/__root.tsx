@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -123,6 +124,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+
+  // LienLoop ships its own full-screen shell and global stylesheet, so it renders without the Lab sidebar.
+  if (pathname === "/lienloop") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
