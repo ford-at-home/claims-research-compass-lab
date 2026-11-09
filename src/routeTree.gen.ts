@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as LienloopRouteImport } from './routes/lienloop'
 import { Route as Uc01RouteImport } from './routes/uc01'
 import { Route as Uc02RouteImport } from './routes/uc02'
 import { Route as Uc03RouteImport } from './routes/uc03'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LienloopRoute = LienloopRouteImport.update({
+  id: '/lienloop',
+  path: '/lienloop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Uc01Route = Uc01RouteImport.update({
@@ -62,6 +68,7 @@ const ApiMockEnterpriseMcpRoute = ApiMockEnterpriseMcpRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/lienloop': typeof LienloopRoute
   '/uc01': typeof Uc01Route
   '/uc02': typeof Uc02Route
   '/uc03': typeof Uc03Route
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/lienloop': typeof LienloopRoute
   '/uc01': typeof Uc01Route
   '/uc02': typeof Uc02Route
   '/uc03': typeof Uc03Route
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/lienloop': typeof LienloopRoute
   '/uc01': typeof Uc01Route
   '/uc02': typeof Uc02Route
   '/uc03': typeof Uc03Route
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/lienloop'
     | '/uc01'
     | '/uc02'
     | '/uc03'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/lienloop'
     | '/uc01'
     | '/uc02'
     | '/uc03'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/lienloop'
     | '/uc01'
     | '/uc02'
     | '/uc03'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  LienloopRoute: typeof LienloopRoute
   Uc01Route: typeof Uc01Route
   Uc02Route: typeof Uc02Route
   Uc03Route: typeof Uc03Route
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lienloop': {
+      id: '/lienloop'
+      path: '/lienloop'
+      fullPath: '/lienloop'
+      preLoaderRoute: typeof LienloopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/uc01': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  LienloopRoute: LienloopRoute,
   Uc01Route: Uc01Route,
   Uc02Route: Uc02Route,
   Uc03Route: Uc03Route,
