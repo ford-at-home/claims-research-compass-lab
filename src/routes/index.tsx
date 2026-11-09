@@ -13,9 +13,9 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { title: "Claims Research Lab — Generic Parallel Web Systems Claims Engineering Use Cases" },
-      { name: "description", content: "Five evidence-first claims research demos with explicit Fixture, Live and Replay modes." },
+      { name: "description", content: "Five evidence-first claims research demos with explicit Fixture, Live and Replay modes, plus the LienLoop total-loss desk." },
       { property: "og:title", content: "Claims Research Lab" },
-      { property: "og:description", content: "Generic Parallel Web Systems Claims Engineering Use Cases — five research workflows." },
+      { property: "og:description", content: "Generic Parallel Web Systems Claims Engineering Use Cases — five research workflows and the LienLoop total-loss desk." },
     ],
   }),
   component: Index,
@@ -44,9 +44,9 @@ function Index() {
           </Link>
         ))}
         <Link to="/lienloop" className="rounded-lg border bg-card p-4 transition-colors hover:border-primary">
-          <div className="font-mono text-xs text-primary">Linked prototype</div>
-          <div className="font-semibold">LienLoop</div>
-          <div className="mt-1 text-sm text-muted-foreground">Original private total-loss desk with six mock systems, human approvals and an audit trail.</div>
+          <div className="font-mono text-xs text-primary">UC06</div>
+          <div className="font-semibold">LienLoop total-loss desk</div>
+          <div className="mt-1 text-sm text-muted-foreground">Settle a fictional car loan after a total loss: six mock systems, human approvals and an audit trail. Sign-in required.</div>
           <div className="mt-2 flex flex-wrap gap-2"><Chip tone="replay">Scripted replay</Chip><Chip tone="sim">Synthetic systems</Chip></div>
         </Link>
       </div>

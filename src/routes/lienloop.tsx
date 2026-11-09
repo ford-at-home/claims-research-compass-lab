@@ -1,64 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink, Play } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/claims/ui-bits";
+import { supabase } from "@/integrations/supabase/client";
+import { requireOperator } from "@/lienloop/access";
+import { LienLoopApp } from "@/lienloop/LienLoopApp";
+import lienloopCss from "@/lienloop/lienloop.css?url";
+import cloudCss from "@/lienloop/cloud.css?url";
 
-const PROTOTYPE_URL = "https://lienloop-total-loss-desk.priorww.chatgpt.site";
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap";
 
+// LienLoop keeps its original access model: every desk view requires a server-validated sign-in
+// (see src/lienloop/ROADMAP.md, "Access protection"). It renders full screen with its own shell;
+// __root.tsx skips the Lab sidebar for this path.
 export const Route = createFileRoute("/lienloop")({
+  ssr: false,
+  beforeLoad: async () => ({ user: await requireOperator(() => supabase.auth.getUser()) }),
   head: () => ({
     meta: [
-      { title: "LienLoop — Claims Research Lab" },
-      { name: "description", content: "Original private LienLoop prototype: scripted replay, six mock systems, synthetic documents, human approvals and an audit trail." },
-      { property: "og:title", content: "LienLoop — Claims Research Lab" },
-      { property: "og:description", content: "Open the original LienLoop prototype or load its optional embed. Private Site authorization remains required." },
+      { title: "LienLoop · Settle a car loan after a total loss" },
+      {
+        name: "description",
+        content:
+          "A fictional car-loan settlement demo: review insurance payments, cover the unpaid balance and approve removal of the lender’s lien.",
+      },
+      { property: "og:title", content: "LienLoop · Settle a car loan after a total loss" },
+      {
+        property: "og:description",
+        content:
+          "Review a fictional case where insurance pays less than the loan balance. Check the documents, payments and approvals before releasing the lien.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: LienLoop,
+  component: LienLoopPage,
 });
 
-function LienLoop() {
-  const [loadPrototype, setLoadPrototype] = useState(false);
-
-  return (
-    <div className="mx-auto w-full max-w-5xl space-y-5 p-4 md:p-8">
-      <header className="space-y-3">
-        <h1 className="text-2xl font-semibold">LienLoop</h1>
-        <div className="flex flex-wrap gap-2">
-          <Chip tone="replay">Scripted replay</Chip>
-          <Chip tone="sim">Synthetic systems</Chip>
-        </div>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          The original total-loss desk prototype uses six mock MCP systems and synthetic documents, with human approvals,
-          an audit trail and four failure scenarios. This is a linked prototype, not a native Claims Research Lab integration.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <a href={PROTOTYPE_URL} target="_blank" rel="noopener noreferrer"><ExternalLink />Open prototype</a>
-          </Button>
-          {!loadPrototype && (
-            <Button variant="outline" onClick={() => setLoadPrototype(true)}><Play />Load prototype</Button>
-          )}
-        </div>
-      </header>
-      <p className="text-sm text-muted-foreground">
-        This private prototype may require ChatGPT sign-in. If embedding or sign-in is blocked, open it directly.
-      </p>
-      {loadPrototype && (
-        <iframe
-          src={PROTOTYPE_URL}
-          title="Original LienLoop private prototype"
-          className="h-[70dvh] min-h-96 w-full max-w-full rounded-md border bg-background"
-          referrerPolicy="no-referrer"
-        />
-      )}
-      <footer className="border-t pt-3 text-xs text-muted-foreground">
-        Original Site access is unchanged. Live Claude mode requires its own API key and remains untested;
-        this page does not use the Parallel key. No authenticated prototype session has been verified here.
-      </footer>
-    </div>
-  );
+// LienLoop's stylesheet sets global element rules (:root, body, h1, button, a). Route head links
+// stay in the document after client-side navigation, which restyled Lab pages, so the sheets are
+// attached on mount and removed on unmount instead.
+function LienLoopPage() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const links = [FONTS, lienloopCss, cloudCss].map((href) => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+      return link;
+    });
+    let live = true;
+    void Promise.all(
+      links.map(
+        (link) =>
+          new Promise<void>((resolve) => {
+            link.onload = () => resolve();
+            link.onerror = () => resolve();
+          }),
+      ),
+    ).then(() => {
+      if (live) setReady(true);
+    });
+    return () => {
+      live = false;
+      links.forEach((link) => link.remove());
+    };
+  }, []);
+  return ready ? <LienLoopApp /> : null;
 }
