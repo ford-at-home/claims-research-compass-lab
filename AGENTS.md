@@ -30,6 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Keep LienLoop as a standalone linked, click-to-load cross-origin prototype route; this preserves original Site authorization without sharing app credentials or reimplementing its systems.
 - Preserve exact user-authorized revision bytes under `specifications/parallel-claims/` and verify them through `SOURCE_REVISION_MANIFEST.json`; retain the original failed import manifest as history, because revision verification does not resolve the original archive mismatch.
 - Parallel API calls and the API key stay in server-only modules (`*.server.ts`, server function handlers); the key is never returned, logged or exported.
 - Live research server functions require `requireSupabaseAuth`; runs are stored in `research_runs` owned by the user (RLS), so visitors cannot spend credits.

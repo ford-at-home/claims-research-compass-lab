@@ -18,6 +18,7 @@
 - [x] Add explicit Live demo baseline selection, persisted ownership/source/hash gates and mock MCP behavior.
 - [x] Separate simulated primary and live external evidence in display/export; 105 tests pass, all five source controls/mobile checked, automatic build OK.
 - [x] Focused compatible capability upgrade: selected-only per-item Tasks, interactive Responses, explicit Search/scope adaptations, Monitor previews and MCP parsing.
+- [x] Add original LienLoop navigation, home card and click-to-load private prototype route without changing research or access behavior.
 - [x] Verify suite, five fixture flows, narrow layout, automatic check and minimal public smoke attempt; document access limitations.
 - [ ] Native Task Groups/Place Search/Decisions/Parallel MCP: saved gateway does not expose these endpoints; explicit compatible implementations are labeled.
 - [ ] Live provider validation: configured saved credential rejected with HTTP 401 Credential not found after one gateway credential refresh; connection authorization repair required.

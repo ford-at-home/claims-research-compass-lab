@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { FlaskConical, Car, Wrench, CalendarClock, CloudHail, Network, Info } from "lucide-react";
+import { FlaskConical, Car, Wrench, CalendarClock, CloudHail, Network, Info, PanelsTopLeft } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +52,14 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={path === "/lienloop"} tooltip="LienLoop prototype">
+                  <Link to="/lienloop">
+                    <PanelsTopLeft className="h-4 w-4" />
+                    <span>LienLoop</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={path === "/"} tooltip="About">
                   <Link to="/">
